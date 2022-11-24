@@ -37,9 +37,9 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-#include "../common/common_params.h"
-#include "../common/common_user_bpf_xdp.h"
-#include "../common/common_libbpf.h"
+#include "common_params.h"
+#include "common_user_bpf_xdp.h"
+#include <common/common_libbpf.h>
 
 #include "af_xdp_kern_shared.h"
 
@@ -177,10 +177,6 @@ static const struct option_wrapper long_options[] = {
 
 	{ { "progsec", required_argument, NULL, 2 },
 	  "Load program in <section> of the ELF file",
-	  "<section>" },
-
-	{ { "progsec_1", required_argument, NULL, 3 },
-	  "Load program 1 in <section> of the ELF file",
 	  "<section>" },
 
 	{ { 0, 0, NULL, 0 }, NULL, false }
@@ -786,10 +782,10 @@ int main(int argc, char **argv)
 	struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
 	struct config cfg = { .ifindex = -1,
 			      .redirect_ifindex = -1,
+				  .xsk_if_queue = 1,
 			      .do_unload = false,
 			      .filename = "",
-			      .progsec = "xdp_sock_0",
-			      .progsec_1 = "xdp_sock_1" };
+			      .progsec = "xdp_sock_0" };
 	struct all_socket_info *all_socket_info;
 	struct xdp_program *xdp_prog;
 	struct bpf_object *bpf_object = NULL;
@@ -805,7 +801,7 @@ int main(int argc, char **argv)
 
 	memset(&stats, 0, sizeof(stats));
 
-//	libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
+	libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
 
 	/* Global shutdown handler */
 	signal(SIGINT, exit_application);
