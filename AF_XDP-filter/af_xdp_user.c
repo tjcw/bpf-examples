@@ -37,9 +37,9 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-#include "common_params.h"
-#include "common_user_bpf_xdp.h"
-#include <common/common_libbpf.h>
+#include "../common/common_params.h"
+#include "../common/common_user_bpf_xdp.h"
+#include "../common/common_libbpf.h"
 
 #include "af_xdp_kern_shared.h"
 
@@ -51,8 +51,6 @@
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
-
-const char *pin_basedir = "/sys/fs/bpf";
 
 enum {
 	k_instrument = true,
@@ -133,6 +131,8 @@ const struct bpf_map_info map_expect = { .key_size = sizeof(struct fivetuple),
 					 .type = BPF_MAP_TYPE_LRU_HASH };
 struct bpf_map_info info = { 0 };
 
+const char *pin_basedir = "/sys/fs/bpf";
+
 static const char *__doc__ = "AF_XDP kernel bypass example\n";
 
 static const struct option_wrapper long_options[] = {
@@ -177,6 +177,10 @@ static const struct option_wrapper long_options[] = {
 
 	{ { "progsec", required_argument, NULL, 2 },
 	  "Load program in <section> of the ELF file",
+	  "<section>" },
+
+	{ { "progsec_1", required_argument, NULL, 3 },
+	  "Load program 1 in <section> of the ELF file",
 	  "<section>" },
 
 	{ { 0, 0, NULL, 0 }, NULL, false }
@@ -730,7 +734,7 @@ int tun_alloc(char *dev)
        */
 	ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
 	if (*dev)
-		strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
+		strncpy(ifr.ifr_name, dev, IFNAMSIZ);
 
 	if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) < 0) {
 		close(fd);
@@ -780,14 +784,12 @@ int main(int argc, char **argv)
 {
 	int ret;
 	struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
-	struct config cfg = {
-		.ifindex = -1,
-		.redirect_ifindex = -1,
-		.xsk_if_queue = 1,
-		.do_unload = false,
-		.filename = "",
-		.progsec = "xdp_sock_0",
-	};
+	struct config cfg = { .ifindex = -1,
+			      .redirect_ifindex = -1,
+			      .do_unload = false,
+			      .filename = "",
+			      .progsec = "xdp_sock_0",
+			      .progsec_1 = "xdp_sock_1" };
 	struct all_socket_info *all_socket_info;
 	struct xdp_program *xdp_prog;
 	struct bpf_object *bpf_object = NULL;
@@ -803,7 +805,7 @@ int main(int argc, char **argv)
 
 	memset(&stats, 0, sizeof(stats));
 
-	libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
+//	libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
 
 	/* Global shutdown handler */
 	signal(SIGINT, exit_application);
