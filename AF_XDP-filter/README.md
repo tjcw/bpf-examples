@@ -42,3 +42,21 @@ constructing the 5-tuple.
 
 Packets for protocols other than UDP, TCP, and ICMP are always passed; this enables
 ARP to work.
+
+To build this code, type 'make' in this directory. Built artifacts are
+- af_xdp_kern.o -- eBPF object file for filtration
+- af_xdp_kern_passall.o -- eBPF object file which just returns XDP_PASS for performace comparisons
+- af_xdp_user -- user space executable to do the filtering
+- filter-xdp_stats -- tool to display traffic statsistics from the map maintained by af_xdp_kern.o
+
+There are a number of run scripts here, and directories which contain run scripts
+-      run.sh -- run a server on a local machine with a Pensando (16 channel) card that you can ping or ssh to from a client machine.
+-      runvm.sh -- run a server in a virtual machine that you can ping or ssh to from another virtual machine.
+-      runnest.sh -- run a server in a nested virtual machine, I run 2 VMs within another VM on my laptop. Ping or ssh from the client nested VM to the server nested VM.
+-      runns.sh -- standalone test case which sets up 2 namespaces and pings between them
+-      iperf3-namespace/run.sh -- run iperf3 between 2 namespaces
+-      iperf3-real/run.sh  -- run iperf3 between 2 real machines with 16-channel NICs
+-      netperf-namespace/run.sh  -- run netperf between 2 namespaces
+-      netperf3-real/run.sh -- run netperf between 2 real machines
+-      netperf3-vm/run.sh -- run netperf between 2 real machines
+    
