@@ -55,6 +55,14 @@ struct {
 	__uint(priority, 10);
 } XDP_RUN_CONFIG(xsk_my_prog);
 
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uint(max_entries, XDP_ACTION_MAX);
+	__type(key, int);
+	__type(value, struct datarec);
+	__uint(pinning, LIBBPF_PIN_BY_NAME);
+} xdp_stats_map SEC(".maps");
+
 
 SEC("xdp")
 int xsk_my_prog(struct xdp_md *ctx)
