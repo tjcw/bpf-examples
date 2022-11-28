@@ -25,15 +25,15 @@ then
   real_pid=$!
   netserver -p 50000 -4 &
   netserver_pid=$!
-  ssh ${CLIENT} netperf -4 -t TCP_RR -H ${SERVER} -p 50000 | tee client_rr.log
-  ssh ${CLIENT} netperf -4 -t TCP_CRR -H ${SERVER} -p 50000 | tee client_crr.log
+  ssh ${CLIENT} netperf -4 -t TCP_RR -H ${SERVER} -p 50000 -- -D | tee client_rr.log
+  ssh ${CLIENT} netperf -4 -t TCP_CRR -H ${SERVER} -p 50000 -- -D | tee client_crr.log
   kill -HUP ${netserver_pid}
 else
   netserver -p 50000 -4 &
   netserver_pid=$!
-  ssh ${CLIENT} netperf -4 -t TCP_RR -H ${SERVER} -p 50000 | tee client_rr.log
-  ssh ${CLIENT} netperf -4 -t TCP_CRR -H ${SERVER} -p 50000 | tee client_crr.log
-  kill -HUP ${netserver_pid}
+  ssh ${CLIENT} netperf -4 -t TCP_RR -H ${SERVER} -p 50000 -- -D | tee client_rr.log
+  ssh ${CLIENT} netperf -4 -t TCP_CRR -H ${SERVER} -p 50000 -- -D | tee client_crr.log
+-- -D  kill -HUP ${netserver_pid}
 fi
 wait
 
