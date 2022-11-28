@@ -1,6 +1,6 @@
 #!/bin/bash -x
 # SPDX-License-Identifier: GPL-2.0
-# Server side helper script to run iperf3 for TCP performance testing
+# Client side helper script to run iperf3 for TCP performance testing
 # in a namespace with the eBPF filter
 ip link set lo up
 ip link set vpeer1 up
