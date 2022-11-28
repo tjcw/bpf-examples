@@ -23,15 +23,17 @@ then
   cd ..
   ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
   real_pid=$!
-  iperf3 -s &
-  iperf3_pid=$!
-  ssh 192.168.17.9 iperf3 -c 10.1.0.2 | tee client.log
-  kill -INT ${iperf3_pid} ${real_pid}
+  netserver -p 50000 -4 &
+  netserver_pid=$!
+  ssh 192.168.17.9 netperf -4 -t TCP_RR -H 10.10.0.20 -p 50000 | tee client_rr.log
+  ssh 192.168.17.9 netperf -4 -t TCP_CRR -H 10.10.0.20 -p 50000 | tee client_crr.log
+  kill -HUP ${netserver_pid}
 else
-  iperf3 -s &
-  iperf3_pid=$!
-  ssh 192.168.17.9 iperf3 -c 10.1.0.2 | tee client.log
-  kill -INT ${iperf3_pid}
+  netserver -p 50000 -4 &
+  netserver_pid=$!
+  ssh 192.168.17.9 netperf -4 -t TCP_RR -H 10.10.0.20 -p 50000 | tee client_rr.log
+  ssh 192.168.17.9 netperf -4 -t TCP_CRR -H 10.10.0.20 -p 50000 | tee client_crr.log
+  kill -HUP ${netserver_pid}
 fi
 wait
 
