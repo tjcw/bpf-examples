@@ -1,6 +1,6 @@
 #!/bin/bash -x
 # SPDX-License-Identifier: GPL-2.0
-# Client side helper script for TCP performance testing with eBPF filter
+# Server side helper script for TCP performance testing with eBPF filter
 ip link set lo up
 ip link set vpeer2 up
 ip addr add 10.10.0.20/16 dev vpeer2
@@ -24,6 +24,7 @@ then
   cd ..
   ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./af_xdp_kern.o &
   ns2_pid=$!
+  sleep 2
   iperf3 -s &
   iperf3_pid=$!
   sleep 20
