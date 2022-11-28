@@ -27,14 +27,15 @@ then
   ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
   ns2_pid=$!
   sleep 2
-  iperf3 -s &
-  iperf3_pid=$!
+  netserver -p 50000 &
+  netserver_pid=$!
   sleep 20
-  kill -INT ${ns2_pid} ${iperf3_pid}
+  kill -INT ${ns2_pid}
+  kill -HUP ${netserver_pid}
 else
-  iperf3 -s &
-  iperf3_pid=$!
+  netserver -p 50000 &
+  netserver_pid=$!
   sleep 20
-  kill -INT ${iperf3_pid}  
+  kill -HUP ${netserver_pid}  
 fi 
 wait
