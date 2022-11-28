@@ -14,6 +14,7 @@ do
   echo 0 >${device}/rp_filter
 done
 export LD_LIBRARY_PATH=/usr/local/lib
+cd ..
 ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./af_xdp_kern.o &
 real_pid=$!
 iperf3 -s &
