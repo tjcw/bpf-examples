@@ -1,5 +1,8 @@
 #!/bin/bash -x
 # SPDX-License-Identifier: GPL-2.0
+# Run script for iperf3 throughput performance test between namespaces
+# Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
+# Set LEAVE env var non-null for baseline test with no eBPF filter
 ip netns delete ns1
 ip netns delete ns2
 sleep 2
