@@ -1,6 +1,8 @@
 #!/bin/bash -x
 # SPDX-License-Identifier: GPL-2.0
 # Server side helper script for TCP performance testing with eBPF filter
+# Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
+# Set LEAVE env var non-null for baseline test with no eBPF filter
 ip link set lo up
 ip link set vpeer2 up
 ip addr add 10.10.0.20/16 dev vpeer2
@@ -22,7 +24,7 @@ then
   done
   export LD_LIBRARY_PATH=/usr/local/lib
   cd ..
-  ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./af_xdp_kern.o &
+  ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
   ns2_pid=$!
   sleep 2
   iperf3 -s &
