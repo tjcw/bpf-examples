@@ -29,5 +29,10 @@ then
   iperf3_pid=$!
   sleep 20
   kill -INT ${ns2_pid} ${iperf3_pid}
+else
+  iperf3 -s &
+  iperf3_pid=$!
+  sleep 20
+  kill -INT ${iperf3_pid}  
 fi 
 wait
