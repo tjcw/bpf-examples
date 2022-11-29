@@ -4,6 +4,7 @@
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 # Set ONLY_CRR env var non-null to just run the TCP_CRR test 
+# Set TCPDUMP env var if you want tcpdumps of packets on the interfaces
 ip link delete veth1
 ip link delete veth2
 
@@ -50,8 +51,11 @@ iptables -F FORWARD
 
   wait
 )
-chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
-tcpdump -r tun0.tcpdump
-tcpdump -r vpeer1.tcpdump
-tcpdump -r vpeer2.tcpdump
+if [[ ! -z "${TCPDUMP}" ]]
+then
+  chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
+  tcpdump -r tun0.tcpdump
+  tcpdump -r vpeer1.tcpdump
+  tcpdump -r vpeer2.tcpdump
+fi
 
