@@ -34,14 +34,14 @@ ip addr add 10.10.0.1/16 dev br0
 iptables -P FORWARD ACCEPT
 iptables -F FORWARD
 
-tcpdump &
-tcpdump_pid=$!
+#tcpdump -i tun0 &
+#tcpdump_pid=$!
 (
   ip netns exec ns2 ./runns2.sh &
   ip netns exec ns1 ./runns1.sh
 
   wait
 )
-kill -INT ${tcpdump_pid}
-wait
+#kill -INT ${tcpdump_pid}
+#wait
 
