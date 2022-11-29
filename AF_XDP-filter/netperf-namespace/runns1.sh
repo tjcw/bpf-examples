@@ -5,7 +5,7 @@
 ip link set lo up
 ip link set vpeer1 up
 ip addr add 10.10.0.10/16 dev vpeer1
-tcpdump -i vpeer1 -w veth1.tcpdump &
+tcpdump -i vpeer1 -w vpeer1.tcpdump &
 tcpdump_vpeer1_pid=$!
 sleep 6
 if [[ -z "ONLY_CRR" ]]
@@ -14,3 +14,4 @@ then
 fi
 netperf -4 -t TCP_CRR -H 10.10.0.20 -p 50000 -- -D
 kill -INT ${tcpdump_vpeer1_pid}
+wait
