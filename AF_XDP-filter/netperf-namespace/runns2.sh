@@ -7,10 +7,13 @@ ip link set lo up
 ip link set vpeer2 up
 ip addr add 10.10.0.20/16 dev vpeer2
 ip link set dev vpeer2 xdpgeneric off
-tcpdump -i tun0 -w tun0.tcpdump &
-tcpdump_tun0_pid=$!
-tcpdump -i vpeer2 -w vpeer2.tcpdump &
-tcpdump_vpeer2_pid=$!
+if [[ ! -z "${TCPDUMP}" ]]
+then
+  tcpdump -i tun0 -w tun0.tcpdump &
+  tcpdump_tun0_pid=$!
+  tcpdump -i vpeer2 -w vpeer2.tcpdump &
+  tcpdump_vpeer2_pid=$!
+fi
 
 (
   mount -t bpf bpf /sys/fs/bpf
@@ -41,6 +44,9 @@ tcpdump_vpeer2_pid=$!
   fi 
   wait
 )
-kill -INT ${tcpdump_tun0_pid}
-kill -INT ${tcpdump_vpeer2_pid}
+if [[ ! -z "${TCPDUMP}" ]]
+then
+  kill -INT ${tcpdump_tun0_pid}
+  kill -INT ${tcpdump_vpeer2_pid}
+fi
 wait
