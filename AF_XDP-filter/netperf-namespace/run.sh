@@ -10,7 +10,7 @@ ip link delete veth2
 ip netns delete ns1
 ip netns delete ns2
 
-rn -f tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
+rm -f tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
 sleep 2
 
 ip netns add ns1
@@ -42,6 +42,7 @@ iptables -F FORWARD
 
   wait
 )
+chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
 tcpdump -r tun0.tcpdump
 tcpdump -r vpeer1.tcpdump
 tcpdump -r vpeer2.tcpdump
