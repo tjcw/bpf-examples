@@ -13,9 +13,9 @@ fi
 sleep 6
 if [[ -n "TCP_RR" ]]
 then
-  netperf -4 -t TCP_RR -H 10.10.0.20 -p 50000 -- -D
+  netperf -4 -t TCP_RR -H 10.10.0.20 -p 50000 --
 fi
-netperf -4 -t TCP_CRR -H 10.10.0.20 -p 50000 -- -D
+netperf -4 -t TCP_CRR -H 10.10.0.20 -p 50000 --
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_vpeer1_pid}
