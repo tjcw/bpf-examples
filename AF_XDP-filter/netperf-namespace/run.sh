@@ -4,8 +4,8 @@
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 # Set ONLY_CRR env var non-null to just run the TCP_CRR test 
-ip netns delete veth1
-ip netns delete veth2
+ip link delete veth1
+ip link delete veth2
 
 ip netns delete ns1
 ip netns delete ns2
