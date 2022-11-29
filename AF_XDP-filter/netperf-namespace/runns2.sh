@@ -11,8 +11,12 @@ ip tuntap add mode tun tun0
 ip link set dev tun0 down
 ip link set dev tun0 addr 10.10.0.30/24
 ip link set dev tun0 up
-tcpdump -i tun0 &
-tcpdump_pid=$!
+tcpdump -i tun0 -w tun0.tcpdump &
+tcpdump_tun0_pid=$!
+tcpdump -i veth1 -w veth1.tcpdump &
+tcpdump_veth1_pid=$!
+tcpdump -i veth2 -w veth2.tcpdump &
+tcpdump_veth2_pid=$!
 
 (
   mount -t bpf bpf /sys/fs/bpf
@@ -43,5 +47,7 @@ tcpdump_pid=$!
   fi 
   wait
 )
-kill -INT ${tcpdump_pid}
+kill -INT ${tcpdump_tun0_pid}
+kill -INT ${tcpdump_veth1_pid}
+kill -INT ${tcpdump_veth2_pid}
 wait
