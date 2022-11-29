@@ -3,12 +3,12 @@
 # Server side helper script for TCP performance testing with eBPF filter
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
-# Set NOTCPDUMP env var non-null to suppress tcpdumps of the interfaces
+# Set TCPDUMP env var non-null to take tcpdumps of the interfaces
 ip link set lo up
 ip link set vpeer2 up
 ip addr add 10.10.0.20/16 dev vpeer2
 ip link set dev vpeer2 xdpgeneric off
-if [[ -z "${NOTCPDUMP}" ]]
+if [[ -n "${TCPDUMP}" ]]
 then
   tcpdump -i tun0 -w tun0.tcpdump &
   tcpdump_tun0_pid=$!
@@ -45,7 +45,7 @@ fi
   fi 
   wait
 )
-if [[ -z "${NOTCPDUMP}" ]]
+if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_tun0_pid}
   kill -INT ${tcpdump_vpeer2_pid}
