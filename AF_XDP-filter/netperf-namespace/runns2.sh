@@ -11,31 +11,37 @@ ip tuntap add mode tun tun0
 ip link set dev tun0 down
 ip link set dev tun0 addr 10.10.0.30/24
 ip link set dev tun0 up
+tcpdump -i tun0 &
+tcpdump_pid=$!
 
-mount -t bpf bpf /sys/fs/bpf
-df /sys/fs/bpf
-ls -l /sys/fs/bpf
-rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
-if [[ -z "${LEAVE}" ]]
-then 
-  for device in /proc/sys/net/ipv4/conf/*
-  do
-    echo 0 >${device}/rp_filter
-  done
-  export LD_LIBRARY_PATH=/usr/local/lib
-  cd ..
-  ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
-  ns2_pid=$!
-  sleep 2
-  netserver -p 50000 -4 &
-  netserver_pid=$!
-  sleep 40
-  kill -INT ${ns2_pid}
-  kill -HUP ${netserver_pid}
-else
-  netserver -p 50000 -4 &
-  netserver_pid=$!
-  sleep 40
-  kill -HUP ${netserver_pid}  
-fi 
+(
+  mount -t bpf bpf /sys/fs/bpf
+  df /sys/fs/bpf
+  ls -l /sys/fs/bpf
+  rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
+  if [[ -z "${LEAVE}" ]]
+  then 
+    for device in /proc/sys/net/ipv4/conf/*
+    do
+      echo 0 >${device}/rp_filter
+    done
+    export LD_LIBRARY_PATH=/usr/local/lib
+    cd ..
+    ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
+    ns2_pid=$!
+    sleep 2
+    netserver -p 50000 -4 &
+    netserver_pid=$!
+    sleep 40
+    kill -INT ${ns2_pid}
+    kill -HUP ${netserver_pid}
+  else
+    netserver -p 50000 -4 &
+    netserver_pid=$!
+    sleep 40
+    kill -HUP ${netserver_pid}  
+  fi 
+  wait
+)
+kill -INT ${tcpdump_pid}
 wait
