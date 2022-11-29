@@ -6,5 +6,8 @@ ip link set lo up
 ip link set vpeer1 up
 ip addr add 10.10.0.10/16 dev vpeer1
 sleep 6
-netperf -4 -t TCP_RR -H 10.10.0.20 -p 50000 -- -D
+if [[ -z "ONLY_CRR" ]]
+then
+  netperf -4 -t TCP_RR -H 10.10.0.20 -p 50000 -- -D
+fi
 netperf -4 -t TCP_CRR -H 10.10.0.20 -p 50000 -- -D
