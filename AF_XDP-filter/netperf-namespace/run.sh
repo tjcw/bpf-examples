@@ -40,4 +40,7 @@ iptables -F FORWARD
 
   wait
 )
+tcpdump -r tun0.tcpdump
+tcpdump -r vpeer1.tcpdump
+tcpdump -r vpeer2.tcpdump
 
