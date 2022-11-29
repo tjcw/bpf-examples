@@ -25,11 +25,19 @@ ip link set veth2 up
 ip link set vpeer1 netns ns1
 ip link set vpeer2 netns ns2
 
+ip tuntap add mode tun tun0
+ip link set dev tun0 down
+ip link set dev tun0 addr 10.10.0.30/24
+ip link set dev tun0 up
+
 ip link add br0 type bridge
 ip link set br0 up
 
 ip link set veth1 master br0
 ip link set veth2 master br0
+ip link set tun0 master br0
+
+ip link set dev tun0 netns ns2
 
 ip addr add 10.10.0.1/16 dev br0
 
