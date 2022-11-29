@@ -13,9 +13,7 @@ ip link set dev tun0 addr 10.10.0.30/24
 ip link set dev tun0 up
 tcpdump -i tun0 -w tun0.tcpdump &
 tcpdump_tun0_pid=$!
-tcpdump -i vpeer1 -w veth1.tcpdump &
-tcpdump_vpeer1_pid=$!
-tcpdump -i vpeer2 -w veth2.tcpdump &
+tcpdump -i vpeer2 -w vpeer2.tcpdump &
 tcpdump_vpeer2_pid=$!
 
 (
@@ -48,6 +46,5 @@ tcpdump_vpeer2_pid=$!
   wait
 )
 kill -INT ${tcpdump_tun0_pid}
-kill -INT ${tcpdump_vpeer1_pid}
 kill -INT ${tcpdump_vpeer2_pid}
 wait
