@@ -43,6 +43,28 @@ constructing the 5-tuple.
 Packets for protocols other than UDP, TCP, and ICMP are always passed; this enables
 ARP to work.
 
+To check out this code and verify that something runs, run these commands
+-      mkdir workspace2
+-      cd workspace2
+-      git clone git@github.com:tjcw/bpf-examples.git
+-      git clone git@github.com:xdp-project/xdp-tools.git
+-      cd xdp-tools
+-      git submodule update --init
+-      cd ..
+-      cd bpf-examples
+-      git submodule update --init
+-      cd ../xdp-tools/
+-      make
+-      cd ..
+-      cd bpf-examples
+-      git checkout tjcw-integration-1.2
+-      cd AF_XDP-filter
+-      make
+-      cd netperf-namespace
+-      sudo FILTER=af_xdp_kern ./run.sh 2>&1|tee logfile.txt
+
+
+
 To build this code, type 'make' in this directory. Built artifacts are
 - af_xdp_kern.o -- eBPF object file for filtration
 - af_xdp_kern_passall.o -- eBPF object file which just returns XDP_PASS for performace comparisons
