@@ -512,11 +512,12 @@ static bool process_packet(struct xsk_socket_info *xsk_src, uint64_t addr,
 			uint8_t *write_addr = (uint8_t *)ip;
 			size_t write_len = len - sizeof(struct ethhdr);
 			ssize_t ret = write(tun_fd, write_addr, write_len);
-			hexdump(stdout, write_addr,
-				(write_len < 32) ? write_len : 32);
-			if (k_instrument)
+			if (k_instrument) {
+				hexdump(stdout, write_addr,
+					(write_len < 32) ? write_len : 32);
 				fprintf(stdout, "Write length %lu actual %ld\n",
 						write_len, ret);
+			}
 			if (ret != write_len) {
 				fprintf(stderr,
 					"Error. %lu bytes requested, %ld bytes delivered, errno=%d %s\n",
