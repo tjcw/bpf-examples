@@ -32,10 +32,12 @@ fi
     ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
     ns2_pid=$!
     sleep 2
+    ./filter-xdp_stats &
+    filter_pid=$!
     netserver -p 50000 -4 &
     netserver_pid=$!
     sleep 60
-    kill -INT ${ns2_pid}
+    kill -INT ${ns2_pid} ${filter_pid}
     kill -HUP ${netserver_pid}
   else
     netserver -p 50000 -4 &
