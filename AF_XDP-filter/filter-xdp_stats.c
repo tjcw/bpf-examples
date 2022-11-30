@@ -27,7 +27,7 @@ static const char *__doc__ = "XDP stats program\n"
 #include "bpf_util.h" /* bpf_num_possible_cpus */
 
 enum {
-	k_trace = true
+	k_trace = false
 };
 
 static const struct option_wrapper long_options[] = {
