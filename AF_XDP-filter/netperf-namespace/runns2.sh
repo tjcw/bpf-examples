@@ -34,13 +34,13 @@ fi
     sleep 2
     netserver -p 50000 -4 &
     netserver_pid=$!
-    sleep 40
+    sleep 60
     kill -INT ${ns2_pid}
     kill -HUP ${netserver_pid}
   else
     netserver -p 50000 -4 &
     netserver_pid=$!
-    sleep 40
+    sleep 60
     kill -HUP ${netserver_pid}  
   fi 
   wait
