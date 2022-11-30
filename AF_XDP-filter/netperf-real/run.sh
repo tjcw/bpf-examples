@@ -9,9 +9,9 @@
 
 function sequence_tests
 {
-  ssh 192.168.17.9 netperf -4 -t TCP_RR -H 10.1.0.2 -p 50000 -- -D | tee client_rr.log
-  ssh 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p 50000 -- -D | tee client_crr.log
-  ssh 192.168.17.9 netperf -4 -t TCP_STREAM -H 10.1.0.2 -p 50000 -- -D | tee client_stream.log
+  ssh -n 192.168.17.9 netperf -4 -t TCP_RR -H 10.1.0.2 -p 50000 -- -D | tee client_rr.log
+  ssh -n 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p 50000 -- -D | tee client_crr.log
+  ssh -n 192.168.17.9 netperf -4 -t TCP_STREAM -H 10.1.0.2 -p 50000 -- -D | tee client_stream.log
 }
 
 ip link set dev enp25s0 xdpgeneric off
@@ -38,7 +38,6 @@ else
   netserver -p 50000 -4 &
   netserver_pid=$!
   sequence_tests
-  ssh 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p 50000 -- -D | tee client_crr.log
   kill -HUP ${netserver_pid}
 fi
 wait
