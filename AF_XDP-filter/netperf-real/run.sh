@@ -7,6 +7,13 @@
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 
+function sequence_tests
+{
+  ssh 192.168.17.9 netperf -4 -t TCP_RR -H 10.1.0.2 -p 50000 -- -D | tee client_rr.log
+  ssh 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p 50000 -- -D | tee client_crr.log
+  ssh 192.168.17.9 netperf -4 -t TCP_STREAM -H 10.1.0.2 -p 50000 -- -D | tee client_stream.log
+}
+
 ip link set dev enp25s0 xdpgeneric off
 rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
 ip tuntap add mode tun tun0
@@ -25,13 +32,12 @@ then
   real_pid=$!
   netserver -p 50000 -4 &
   netserver_pid=$!
-  ssh 192.168.17.9 netperf -4 -t TCP_RR -H 10.1.0.2 -p 50000 -- -D | tee client_rr.log
-  ssh 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p 50000 -- -D | tee client_crr.log
+  sequence_tests
   kill -HUP ${netserver_pid}
 else
   netserver -p 50000 -4 &
   netserver_pid=$!
-  ssh 192.168.17.9 netperf -4 -t TCP_RR -H 10.1.0.2 -p 50000 -- -D | tee client_rr.log
+  sequence_tests
   ssh 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p 50000 -- -D | tee client_crr.log
   kill -HUP ${netserver_pid}
 fi
