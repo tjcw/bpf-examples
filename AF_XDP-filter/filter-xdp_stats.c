@@ -196,7 +196,7 @@ void map_get_value_percpu_array(int fd, __u32 key, struct datarec *value)
 		sum_pkts += values[i].rx_packets;
 		sum_bytes += values[i].rx_bytes;
 		if(k_trace)
-			fprintf(stderr, "values[%d].rx_packets=%lu .rx_bytes=%lu\n",
+			fprintf(stderr, "values[%d].rx_packets=%llu .rx_bytes=%llu\n",
 					i,values[i].rx_packets, values[i].rx_bytes) ;
 	}
 	value->rx_packets = sum_pkts;
