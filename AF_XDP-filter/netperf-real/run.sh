@@ -33,7 +33,8 @@ then
   netserver -p 50000 -4 &
   netserver_pid=$!
   sequence_tests
-  kill -HUP ${netserver_pid}
+  kill -INT ${real_pid}
+  kill -HUP ${netserver_pid} 
 else
   netserver -p 50000 -4 &
   netserver_pid=$!
