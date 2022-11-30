@@ -514,8 +514,9 @@ static bool process_packet(struct xsk_socket_info *xsk_src, uint64_t addr,
 			ssize_t ret = write(tun_fd, write_addr, write_len);
 			hexdump(stdout, write_addr,
 				(write_len < 32) ? write_len : 32);
-			fprintf(stdout, "Write length %lu actual %ld\n",
-				write_len, ret);
+			if (k_instrument)
+				fprintf(stdout, "Write length %lu actual %ld\n",
+						write_len, ret);
 			if (ret != write_len) {
 				fprintf(stderr,
 					"Error. %lu bytes requested, %ld bytes delivered, errno=%d %s\n",
