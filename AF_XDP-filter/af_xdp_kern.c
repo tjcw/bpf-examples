@@ -24,7 +24,7 @@
 #define XDP_ACTION_MAX (XDP_REDIRECT + 1)
 #endif
 
-enum { k_tracing = 0, k_tracing_detail = 0 };
+enum { k_tracing = 1, k_tracing_detail = 0 };
 
 enum { k_hashmap_size = 64 };
 
@@ -100,6 +100,9 @@ static __always_inline __u32 stats_record_action(struct xdp_md *ctx,
 	 */
 	rec->rx_packets++;
 	rec->rx_bytes += (ctx->data_end - ctx->data);
+	if (k_tracing)
+		bpf_printk("stats_record_action rec->rx_packets=%llu rec->rx_bytes=%llu",
+				action, rec->rx_packets, rec->rx_bytes);
 
 	return action;
 }
