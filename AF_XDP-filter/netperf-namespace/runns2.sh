@@ -34,8 +34,7 @@ fi
     sleep 2
     ./filter-xdp_stats &
     filter_pid=$!
-    netserver -p 
-50000 -4 &
+    netserver -p 50000 -4 &
     netserver_pid=$!
     sleep 60
     kill -TERM ${ns2_pid} ${filter_pid}
