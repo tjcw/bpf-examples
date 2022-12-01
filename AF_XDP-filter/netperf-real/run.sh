@@ -11,8 +11,8 @@
 function sequence_tests
 {
   ssh -n 192.168.17.9 netperf -4 -t TCP_RR -H 10.1.0.2 -p ${PORT} -- -D 2>&1 | tee client_rr.log
-  ssh -n 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p ${PORT} -- -D 2>&1 | tee client_crr.log
   ssh -n 192.168.17.9 netperf -4 -t TCP_STREAM -H 10.1.0.2 -p ${PORT} -- -D 2>&1 | tee client_stream.log
+  ssh -n 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p ${PORT} -- -D 2>&1 | tee client_crr.log
 }
 
 ip link set dev enp25s0 xdpgeneric off
