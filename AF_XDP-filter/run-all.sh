@@ -5,6 +5,7 @@
   FILTER=af_xdp_kern TCP_RR=1 PORT=50000 ./run.sh
   FILTER=af_xdp_kern_passall TCP_RR=1 PORT=50001 ./run.sh
   LEAVE=1 TCP_RR=1 PORT=50002 ./run.sh
+  sleep 260
 )
 (
   cd netperf-real
@@ -19,6 +20,7 @@
   FILTER=af_xdp_kern TCP_RR=1 PORT=50006 ./run.sh
   FILTER=af_xdp_kern_passall TCP_RR=1 PORT=50007 ./run.sh
   LEAVE=1 TCP_RR=1 PORT=50008 ./run.sh
+  sleep 260
 )
 (
   cd iperf3-real
