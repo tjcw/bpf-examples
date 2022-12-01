@@ -6,12 +6,13 @@
 # Arranged for a Pensando NIC which uses 16 queues.
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
+# Set PORT to the port number netserver should listen on
 
 function sequence_tests
 {
-  ssh -n 192.168.17.9 netperf -4 -t TCP_RR -H 10.1.0.2 -p 50000 -- -D 2>&1 | tee client_rr.log
-  ssh -n 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p 50000 -- -D 2>&1 | tee client_crr.log
-  ssh -n 192.168.17.9 netperf -4 -t TCP_STREAM -H 10.1.0.2 -p 50000 -- -D 2>&1 | tee client_stream.log
+  ssh -n 192.168.17.9 netperf -4 -t TCP_RR -H 10.1.0.2 -p ${PORT} -- -D 2>&1 | tee client_rr.log
+  ssh -n 192.168.17.9 netperf -4 -t TCP_CRR -H 10.1.0.2 -p ${PORT} -- -D 2>&1 | tee client_crr.log
+  ssh -n 192.168.17.9 netperf -4 -t TCP_STREAM -H 10.1.0.2 -p ${PORT} -- -D 2>&1 | tee client_stream.log
 }
 
 ip link set dev enp25s0 xdpgeneric off
@@ -30,13 +31,13 @@ then
   cd ..
   ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
   real_pid=$!
-  netserver -p 50000 -4 &
+  netserver -p ${PORT} -4 &
   netserver_pid=$!
   sequence_tests
   kill -INT ${real_pid}
   kill -HUP ${netserver_pid} 
 else
-  netserver -p 50000 -4 &
+  netserver -p ${PORT} -4 &
   netserver_pid=$!
   sequence_tests
   kill -HUP ${netserver_pid}

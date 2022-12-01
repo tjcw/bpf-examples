@@ -5,6 +5,7 @@
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 # Set TCP_RR env var non-null to include TCP_RR test 
 # Set TCPDUMP env var non-null if you want take tcpdumps of packets on the interfaces
+# Set PORT to indicate the port to use. Successive test shouuld have different port numbers because netserver leaves the old port in TIMED_WAIT
 ip link delete veth1
 ip link delete veth2
 
