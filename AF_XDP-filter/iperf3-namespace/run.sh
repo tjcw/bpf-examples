@@ -3,6 +3,8 @@
 # Run script for iperf3 throughput performance test between namespaces
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
+# Set PORT to choose a port for the server to listen on
+
 ip netns delete veth1
 ip netns delete veth2
 
