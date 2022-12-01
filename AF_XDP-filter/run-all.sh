@@ -13,6 +13,7 @@
   FILTER=af_xdp_kern TCP_RR=1 PORT=50003 ./run.sh
   FILTER=af_xdp_kern_passall TCP_RR=1 PORT=50004 ./run.sh
   LEAVE=1 TCP_RR=1 PORT=50005 ./run.sh
+  sleep 260
 )
 (
   cd iperf3-namespace
@@ -20,7 +21,6 @@
   FILTER=af_xdp_kern TCP_RR=1 PORT=50006 ./run.sh
   FILTER=af_xdp_kern_passall TCP_RR=1 PORT=50007 ./run.sh
   LEAVE=1 TCP_RR=1 PORT=50008 ./run.sh
-  sleep 260
 )
 (
   cd iperf3-real
