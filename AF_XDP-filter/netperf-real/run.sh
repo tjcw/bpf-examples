@@ -31,13 +31,13 @@ then
   cd ..
   ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
   real_pid=$!
-  netserver -p ${PORT} -4 &
+  netserver -p ${PORT} -4 -D -f &
   netserver_pid=$!
   sequence_tests
   kill -INT ${real_pid}
   kill -INT ${netserver_pid} 
 else
-  netserver -p ${PORT} -4 &
+  netserver -p ${PORT} -4 -D -f &
   netserver_pid=$!
   sequence_tests
   kill -INT ${netserver_pid}
