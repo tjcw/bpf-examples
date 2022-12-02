@@ -38,12 +38,12 @@ fi
     netserver_pid=$!
     sleep 60
     kill -TERM ${ns2_pid} ${filter_pid}
-    kill -HUP ${netserver_pid}
+    kill -INT ${netserver_pid}
   else
     netserver -p ${PORT} -4 &
     netserver_pid=$!
     sleep 60
-    kill -HUP ${netserver_pid}  
+    kill -INT ${netserver_pid}  
   fi 
   wait
 )
