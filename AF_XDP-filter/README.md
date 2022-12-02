@@ -58,7 +58,7 @@ To check out this code and verify that something runs, run these commands
       cd AF_XDP-filter
       make
       cd netperf-namespace 
-      sudo FILTER=af_xdp_kern PORT==50000 ./run.sh 2>&1|tee logfile.txt
+      sudo FILTER=af_xdp_kern PORT=50000 ./run.sh 2>&1|tee logfile.txt
 ```
 
 
