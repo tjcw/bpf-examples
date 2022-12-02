@@ -48,16 +48,16 @@ To check out this code and verify that something runs, run these commands
       mkdir workspace2
       cd workspace2
       git clone git@github.com:tjcw/bpf-examples.git
-      cd xdp-tools
+      cd bpf-examples
+      git checkout tjcw-integration-1.2
       git submodule update --init
+      cd lib/xdp-tools
       git checkout master
       cd ..
       cd bpf-examples
-      git submodule update --init
-      git checkout tjcw-integration-1.2
       cd AF_XDP-filter
       make
-      cd netperf-namespace
+      cd netperf-namespace 
       sudo FILTER=af_xdp_kern ./run.sh 2>&1|tee logfile.txt
 ```
 
