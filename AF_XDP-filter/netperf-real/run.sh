@@ -35,12 +35,12 @@ then
   netserver_pid=$!
   sequence_tests
   kill -INT ${real_pid}
-  kill -HUP ${netserver_pid} 
+  kill -INT ${netserver_pid} 
 else
   netserver -p ${PORT} -4 &
   netserver_pid=$!
   sequence_tests
-  kill -HUP ${netserver_pid}
+  kill -INT ${netserver_pid}
 fi
 wait
 
