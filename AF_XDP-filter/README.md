@@ -44,7 +44,7 @@ Packets for protocols other than UDP, TCP, and ICMP are always passed; this enab
 ARP to work.
 
 To check out this code and verify that something runs, run these commands
-#+BEGIN_SRC sh
+```
       mkdir workspace2
       cd workspace2
       git clone git@github.com:tjcw/bpf-examples.git
@@ -59,7 +59,7 @@ To check out this code and verify that something runs, run these commands
       make
       cd netperf-namespace
       sudo FILTER=af_xdp_kern ./run.sh 2>&1|tee logfile.txt
-#+END_SRC
+```
 
 
 To build this code, type 'make' in this directory. Built artifacts are
