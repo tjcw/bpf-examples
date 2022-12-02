@@ -34,13 +34,13 @@ fi
     sleep 2
     ./filter-xdp_stats &
     filter_pid=$!
-    netserver -p ${PORT} -4 &
+    netserver -p ${PORT} -4 -D -f &
     netserver_pid=$!
     sleep 60
     kill -TERM ${ns2_pid} ${filter_pid}
     kill -INT ${netserver_pid}
   else
-    netserver -p ${PORT} -4 &
+    netserver -p ${PORT} -4 -D -f &
     netserver_pid=$!
     sleep 60
     kill -INT ${netserver_pid}  

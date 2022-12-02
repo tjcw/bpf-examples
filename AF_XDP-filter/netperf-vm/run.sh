@@ -23,13 +23,13 @@ then
   cd ..
   ./af_xdp_user -S -d enp25s0 -Q 1 --filename ./${FILTER}.o &
   real_pid=$!
-  netserver -p 50000 -4 &
+  netserver -p 50000 -4 -D -f &
   netserver_pid=$!
   ssh ${CLIENT} netperf -4 -t TCP_RR -H ${SERVER} -p 50000 -- -D | tee client_rr.log
   ssh ${CLIENT} netperf -4 -t TCP_CRR -H ${SERVER} -p 50000 -- -D | tee client_crr.log
   kill -INT ${netserver_pid}
 else
-  netserver -p 50000 -4 &
+  netserver -p 50000 -4 -D -f &
   netserver_pid=$!
   ssh ${CLIENT} netperf -4 -t TCP_RR -H ${SERVER} -p 50000 -- -D | tee client_rr.log
   ssh ${CLIENT} netperf -4 -t TCP_CRR -H ${SERVER} -p 50000 -- -D | tee client_crr.log
