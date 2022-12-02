@@ -53,12 +53,12 @@ To check out this code and verify that something runs, run these commands
       git submodule update --init
       cd lib/xdp-tools
       git checkout master
-      cd ..
+      cd ../..
       cd bpf-examples
       cd AF_XDP-filter
       make
       cd netperf-namespace 
-      sudo FILTER=af_xdp_kern ./run.sh 2>&1|tee logfile.txt
+      sudo FILTER=af_xdp_kern PORT==50000 ./run.sh 2>&1|tee logfile.txt
 ```
 
 
