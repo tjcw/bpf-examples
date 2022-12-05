@@ -19,6 +19,7 @@ then
   do
     echo 0 >${device}/rp_filter
   done
+  cd ..
   ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./af_xdp_kern.o &
   ns2_pid=$!
   sleep 20
