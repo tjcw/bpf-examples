@@ -43,17 +43,14 @@ constructing the 5-tuple.
 Packets for protocols other than UDP, TCP, and ICMP are always passed; this enables
 ARP to work.
 
-To check out this code and verify that something runs, run these commands
+To check out this code and verify that something runs, run these commands. Note that running the testcase requires root privileges.
 ```
-      mkdir workspace2
-      cd workspace2
+      mkdir workspace
+      cd workspace
       git clone git@github.com:tjcw/bpf-examples.git
       cd bpf-examples
       git checkout tjcw-integration-1.2
       git submodule update --init
-      cd lib/xdp-tools
-      git checkout master
-      cd ../..
       cd bpf-examples
       cd AF_XDP-filter
       make
@@ -68,11 +65,11 @@ To build this code, type 'make' in this directory. Built artifacts are
 - af_xdp_user -- user space executable to do the filtering
 - filter-xdp_stats -- tool to display traffic statsistics from the map maintained by af_xdp_kern.o
 
-There are a number of run scripts here, and directories which contain run scripts
--      run.sh -- run a server on a local machine with a Pensando (16 channel) card that you can ping or ssh to from a client machine.
--      runvm.sh -- run a server in a virtual machine that you can ping or ssh to from another virtual machine.
--      runnest.sh -- run a server in a nested virtual machine, I run 2 VMs within another VM on my laptop. Ping or ssh from the client nested VM to the server nested VM.
--      runns.sh -- standalone test case which sets up 2 namespaces and pings between them
+There are a number of  directories which contain run scripts
+-      run/run.sh -- run a server on a local machine with a Pensando (16 channel) card that you can ping or ssh to from a client machine.
+-      run/runvm.sh -- run a server in a virtual machine that you can ping or ssh to from another virtual machine.
+-      run/runnest.sh -- run a server in a nested virtual machine, I run 2 VMs within another VM on my laptop. Ping or ssh from the client nested VM to the server nested VM.
+-      run/runns.sh -- standalone test case which sets up 2 namespaces and pings between them
 -      iperf3-namespace/run.sh -- run iperf3 between 2 namespaces
 -      iperf3-real/run.sh  -- run iperf3 between 2 real machines with 16-channel NICs
 -      netperf-namespace/run.sh  -- run netperf between 2 namespaces
