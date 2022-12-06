@@ -626,7 +626,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 				stats->stats.tx_packets += 1;
 				return true;
 			}
-			}
+
 		} else {
 			stats->stats.filter_drops[protocol] += 1;
 		}
