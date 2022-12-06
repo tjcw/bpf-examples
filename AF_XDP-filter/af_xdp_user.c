@@ -1089,7 +1089,7 @@ int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 		int rc=system("bash") ;
-		fprintf("bash returns %d, errno=%d\n", rc, errno);
+		fprintf(stderr, "bash returns %d, errno=%d\n", rc, errno);
 		tx_socket_info = xsk_configure_socket_tx(&cfg) ;
 		if ( tx_socket_info ==  NULL)
 		{
