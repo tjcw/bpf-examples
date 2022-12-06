@@ -649,7 +649,7 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 
 	if (completed > 0) {
 		for (int i = 0; i < completed; i++)
-			xsk_free_umem_frame(&xsk_tx->socket_info->umem,
+			umem_free_umem_frame(&xsk_tx->socket_info->umem,
 					    *xsk_ring_cons__comp_addr(&xsk_tx->socket_info.cq,
 								      idx_cq++));
 
