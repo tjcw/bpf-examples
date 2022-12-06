@@ -392,7 +392,6 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 	tx_info->outstanding_tx = 0;
 
 	struct xsk_socket_config xsk_cfg;
-	struct xsk_socket_info *xsk_info;
 	int ret;
 
 	/* Allocate memory for NUM_FRAMES of the default XDP frame size */
@@ -644,17 +643,17 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 
 
 	/* Collect/free completed TX buffers */
-	completed = xsk_ring_cons__peek(&xsk_tx->socket_info->cq, // ???
+	completed = xsk_ring_cons__peek(&xsk_tx->socket_info.cq,
 					XSK_RING_CONS__DEFAULT_NUM_DESCS,
 					&idx_cq);
 
 	if (completed > 0) {
 		for (int i = 0; i < completed; i++)
 			xsk_free_umem_frame(&xsk_tx->socket_info->umem,
-					    *xsk_ring_cons__comp_addr(&xsk_tx->socket_info->cq,
+					    *xsk_ring_cons__comp_addr(&xsk_tx->socket_info.cq,
 								      idx_cq++));
 
-		xsk_ring_cons__release(&xsk_tx->socket_info->cq, completed);
+		xsk_ring_cons__release(&xsk_tx->socket_info.cq, completed);
 		xsk_tx->outstanding_tx -= completed < xsk_tx->outstanding_tx ?
 			completed : xsk_tx->outstanding_tx;
 	}
