@@ -150,14 +150,14 @@ void parse_cmdline_args(int argc, char **argv,
 			cfg->redirect_ifname =
 				(char *)&cfg->redirect_ifname_buf;
 			strncpy(cfg->redirect_ifname, optarg, IF_NAMESIZE - 1);
-			cfg->redirect_ifindex =
-				if_nametoindex(cfg->redirect_ifname);
-			if (cfg->redirect_ifindex == 0) {
-				fprintf(stderr,
-					"ERR: --redirect-dev name unknown err(%d):%s\n",
-					errno, strerror(errno));
-				goto error;
-			}
+//			cfg->redirect_ifindex =
+//				if_nametoindex(cfg->redirect_ifname);
+//			if (cfg->redirect_ifindex == 0) {
+//				fprintf(stderr,
+//					"ERR: --redirect-dev name unknown err(%d):%s\n",
+//					errno, strerror(errno));
+//				goto error;
+//			}
 			break;
 		case 'a':
 			cfg->redirect_ifname_pid = atol(optarg);
