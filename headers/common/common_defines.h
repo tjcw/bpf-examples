@@ -34,6 +34,7 @@ struct config {
 	__u32 batch_pkts;
 	__u32 opt_ip_src;
 	__u32 opt_ip_dst;
+	pid_t redirect_ifname_pid ;
 };
 
 #define BATCH_PKTS_MAX		64

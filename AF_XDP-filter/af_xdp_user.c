@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
+#define _GNU_SOURCE
 #include <assert.h>
 #include <errno.h>
 #include <getopt.h>
@@ -38,6 +39,9 @@
 #include <fcntl.h>
 
 #include <sys/time.h>
+
+#include <sys/syscall.h>      /* Definition of SYS_* constants */
+#include <sched.h>
 
 #include "common_params.h"
 #include "common_user_bpf_xdp.h"
@@ -113,6 +117,10 @@ struct xsk_socket {
 struct all_socket_info {
 	struct xsk_socket_info *xsk_socket_info[k_rx_queue_count_max];
 };
+struct tx_socket_info {
+	struct xsk_socket_info socket_info;
+	int outstanding_tx;
+};
 
 struct socket_stats {
 	struct stats_record stats;
@@ -148,6 +156,12 @@ static const struct option_wrapper long_options[] = {
 	{ { "dev", required_argument, NULL, 'd' },
 	  "Operate on device <ifname>",
 	  "<ifname>",
+	  true },
+	{ { "redirect-dev", required_argument, NULL, 'r' },
+	  "Redirect first packets to this output device",
+	  true },
+	{ { "redirect-pid", required_argument, NULL, 'P' },
+	  "Redirect first packets to the namespace of this pid",
 	  true },
 
 	{ { "skb-mode", no_argument, NULL, 'S' },
@@ -370,6 +384,69 @@ static struct all_socket_info *xsk_configure_socket_all(struct config *cfg,
 	return xsk_info_all;
 }
 
+static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
+{
+	struct tx_socket_info *tx_info = calloc(1, sizeof(struct tx_socket_info)) ;
+	tx_info->outstanding_tx = 0;
+
+	struct xsk_socket_config xsk_cfg;
+	struct xsk_socket_info *xsk_info;
+	int ret;
+
+	xsk_info = calloc(1, sizeof(*xsk_info));
+	if (!xsk_info)
+		return NULL;
+
+	/* Allocate memory for NUM_FRAMES of the default XDP frame size */
+	int packet_buffer_size = NUM_FRAMES * FRAME_SIZE * 2;
+	void *packet_buffer;
+	if (posix_memalign(&packet_buffer,
+			   getpagesize(), /* PAGE_SIZE aligned */
+			   packet_buffer_size)) {
+		fprintf(stderr, "ERROR: Can't allocate buffer memory \"%s\"\n",
+			strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	configure_xsk_umem(&(xsk_info->umem), packet_buffer, packet_buffer_size,
+			   &(xsk_info->fq), &(xsk_info->cq));
+	xsk_cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
+	xsk_cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
+	xsk_cfg.libbpf_flags = 0;
+	xsk_cfg.xdp_flags = cfg->xdp_flags;
+	xsk_cfg.bind_flags = cfg->xsk_bind_flags;
+	xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
+	ret = xsk_socket__create_shared(&tx_info->socket_info->xsk, cfg->ifname, if_queue,
+			&tx_info->socket_info->umem.umem, &tx_info->socket_info->rx,
+			&tx_info->socket_info->tx, &(&tx_info->socket_info->fq),
+					&(&tx_info->socket_info->cq), &xsk_cfg);
+
+	printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
+	if (ret)
+		goto error_exit;
+
+	/* Stuff the receive path with buffers, we assume we have enough */
+	__u32 idx;
+	ret = xsk_ring_prod__reserve(&tx_info->socket_info->fq,
+				     XSK_RING_PROD__DEFAULT_NUM_DESCS, &idx);
+
+	printf("xsk_ring_prod__reserve returns %d, XSK_RING_PROD__DEFAULT_NUM_DESCS is %d\n",
+	       ret, XSK_RING_PROD__DEFAULT_NUM_DESCS);
+	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS)
+		goto error_exit;
+
+	for (int i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS; i++)
+		*xsk_ring_prod__fill_addr(&tx_info->socket_info->fq, idx++) =
+			umem_alloc_umem_frame(&tx_info->socket_info->umem);
+
+	xsk_ring_prod__submit(&tx_info->socket_info->fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
+
+	return xsk_info;
+
+error_exit:
+	errno = -ret;
+	return NULL;
+}
+
 static void show_fivetuple(struct fivetuple *f)
 {
 	if (k_verbose) {
@@ -453,12 +530,14 @@ static bool filter_pass_icmp(int accept_map_fd, __u32 saddr, __u32 daddr,
 		fprintf(stdout, "bpf_map_update_elem returns %d\n", ret);
 	return true;
 }
-static bool process_packet(struct xsk_socket_info *xsk_src, uint64_t addr,
+static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_info *xsk_tx,
+               uint64_t addr,
 			   uint32_t len, struct socket_stats *stats, int tun_fd,
 			   int accept_map_fd)
 {
 	uint8_t *pkt = xsk_umem__get_data(xsk_src->umem.buffer, addr);
 	bool pass = false;
+	uint32_t tx_idx = 0;
 
 	struct ethhdr *eth = (struct ethhdr *)pkt;
 	struct iphdr *ip = (struct iphdr *)(eth + 1);
@@ -511,18 +590,42 @@ static bool process_packet(struct xsk_socket_info *xsk_src, uint64_t addr,
 			stats->stats.filter_passes[protocol] += 1;
 			uint8_t *write_addr = (uint8_t *)ip;
 			size_t write_len = len - sizeof(struct ethhdr);
-			ssize_t ret = write(tun_fd, write_addr, write_len);
-			if (k_instrument) {
-				hexdump(stdout, write_addr,
-					(write_len < 32) ? write_len : 32);
-				fprintf(stdout, "Write length %lu actual %ld\n",
-						write_len, ret);
+			if ( tun_fd != -1)
+			{
+				ssize_t ret = write(tun_fd, write_addr, write_len);
+				if (k_instrument) {
+					hexdump(stdout, write_addr,
+						(write_len < 32) ? write_len : 32);
+					fprintf(stdout, "Write length %lu actual %ld\n",
+							write_len, ret);
+				}
+				if (ret != write_len) {
+					fprintf(stderr,
+						"Error. %lu bytes requested, %ld bytes delivered, errno=%d %s\n",
+						write_len, ret, errno, strerror(errno));
+					exit(EXIT_FAILURE);
+				}
+			} else {
+				/* Writing to output queue */
+				/* Here we sent the packet out of the receive port. Note that
+				 * we allocate one entry and schedule it. Your design would be
+				 * faster if you do batch processing/transmission */
+
+				ssize_t ret = xsk_ring_prod__reserve(xsk_tx, 1, &tx_idx);
+				if (ret != 1) {
+					/* No more transmit slots, drop the packet */
+					return false;
+				}
+
+				xsk_ring_prod__tx_desc(xsk_tx, tx_idx)->addr = addr;
+				xsk_ring_prod__tx_desc(xsk_tx, tx_idx)->len = len;
+				xsk_ring_prod__submit(xsk_tx, 1);
+				xsk_tx->outstanding_tx++;
+
+				stats->stats.tx_bytes += len;
+				stats->stats.tx_packets += 1;
+				return true;
 			}
-			if (ret != write_len) {
-				fprintf(stderr,
-					"Error. %lu bytes requested, %ld bytes delivered, errno=%d %s\n",
-					write_len, ret, errno, strerror(errno));
-				exit(EXIT_FAILURE);
 			}
 		} else {
 			stats->stats.filter_drops[protocol] += 1;
@@ -531,7 +634,36 @@ static bool process_packet(struct xsk_socket_info *xsk_src, uint64_t addr,
 	return false; // Not transmitting anything
 }
 
+static void complete_tx(struct tx_socket_info *xsk_tx)
+{
+	unsigned int completed;
+	uint32_t idx_cq;
+
+	if (!xsk_tx->outstanding_tx)
+		return;
+
+	sendto(xsk_socket__fd(xsk_tx->socket_info.xsk), NULL, 0, MSG_DONTWAIT, NULL, 0);
+
+
+	/* Collect/free completed TX buffers */
+	completed = xsk_ring_cons__peek(&xsk_tx->socket_info->umem->cq,
+					XSK_RING_CONS__DEFAULT_NUM_DESCS,
+					&idx_cq);
+
+	if (completed > 0) {
+		for (int i = 0; i < completed; i++)
+			xsk_free_umem_frame(&xsk_tx->socket_info->umem,
+					    *xsk_ring_cons__comp_addr(&xsk_tx->socket_info->umem->cq,
+								      idx_cq++));
+
+		xsk_ring_cons__release(&xsk_tx->socket_info->umem->cq, completed);
+		xsk_tx->outstanding_tx -= completed < xsk_tx->outstanding_tx ?
+			completed : xsk_tx->outstanding_tx;
+	}
+}
+
 static void handle_receive_packets(struct xsk_socket_info *xsk_src,
+		           struct tx_socket_info *xsk_tx,
 				   struct socket_stats *stats, int tun_fd,
 				   int accept_map_fd)
 {
@@ -570,7 +702,7 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 		uint32_t len =
 			xsk_ring_cons__rx_desc(&xsk_src->rx, idx_rx++)->len;
 
-		bool transmitted = process_packet(xsk_src, addr, len, stats,
+		bool transmitted = process_packet(xsk_src, xsk_tx, addr, len, stats,
 						  tun_fd, accept_map_fd);
 
 		if (k_instrument)
@@ -589,6 +721,7 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 
 static void rx_and_process(struct config *cfg,
 			   struct all_socket_info *all_socket_info,
+			   struct tx_socket_info *tx_socket_info,
 			   struct socket_stats *stats, int tun_fd,
 			   int accept_map_fd)
 {
@@ -610,6 +743,7 @@ static void rx_and_process(struct config *cfg,
 			if (fds[q].revents & POLLIN)
 				handle_receive_packets(
 					all_socket_info->xsk_socket_info[q],
+					tx_socket_info,
 					stats, tun_fd, accept_map_fd);
 		}
 	}
@@ -803,6 +937,7 @@ int main(int argc, char **argv)
 		.do_unload = false,
 		.filename = "",
 		.progsec = "xdp_sock_0",
+		.redirect_ifname_pid = -1
 	};
 	struct all_socket_info *all_socket_info;
 	struct xdp_program *xdp_prog;
@@ -816,6 +951,7 @@ int main(int argc, char **argv)
 	int xsks_map_fd;
 
 	int accept_map_fd;
+	struct tx_socket_info *tx_socket_info ;
 
 	memset(&stats, 0, sizeof(stats));
 
@@ -907,22 +1043,57 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* Start TUN */
-	strcpy(tun_name, "tun0");
-	tun_fd = tun_alloc(tun_name);
-	if (tun_fd < 0) {
-		err = errno;
-		fprintf(stderr, "ERROR:tun_alloc gives errno=%d %s\n", err,
-			strerror(err));
-		exit(EXIT_FAILURE);
-	}
+	if ( cfg.redirect_ifname_pid == -1)
+	{
+		/* First frames to be handled by TUN */
+		/* Start TUN */
+		strcpy(tun_name, "tun0");
+		tun_fd = tun_alloc(tun_name);
+		if (tun_fd < 0) {
+			err = errno;
+			fprintf(stderr, "ERROR:tun_alloc gives errno=%d %s\n", err,
+				strerror(err));
+			exit(EXIT_FAILURE);
+		}
 
-	if (k_receive_tuntap) {
-		// Start thread to read from the tun
-		ret = pthread_create(&tun_read_thread, NULL, tun_read, &tun_fd);
-		if (ret) {
+		if (k_receive_tuntap) {
+			// Start thread to read from the tun
+			ret = pthread_create(&tun_read_thread, NULL, tun_read, &tun_fd);
+			if (ret) {
+				fprintf(stderr,
+					"ERROR: Failed creating tun_read thread "
+					"\"%s\"\n",
+					strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+		}
+		tx_socket_info = NULL ;
+	} else {
+		/* First frames to be handled by AF_XDP send */
+		tun_fd=-1 ;
+		int setns_fd = syscall(SYS_pidfd_open,cfg.redirect_ifname_pid, 0) ;
+		if (setns_fd == -1)
+		{
 			fprintf(stderr,
-				"ERROR: Failed creating tun_read thread "
+				"ERROR: Failed calling pidfd_open) "
+				"\"%s\"\n",
+				strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		err=setns(fd, CLONE_NEWNET) ;
+		if ( err == -1)
+		{
+			fprintf(stderr,
+				"ERROR: Failed calling setns) "
+				"\"%s\"\n",
+				strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		tx_socket_info = xsk_configure_socket_tx(cfg) ;
+		if ( tx_socket_info ==  NULL)
+		{
+			fprintf(stderr,
+				"ERROR: Failed calling xsk_configure_socket_tx) "
 				"\"%s\"\n",
 				strerror(errno));
 			exit(EXIT_FAILURE);
@@ -943,10 +1114,11 @@ int main(int argc, char **argv)
 	}
 	/* Receive and count packets than drop them */
 	gettimeofday(&(stats.start_time), NULL) ;
-	rx_and_process(&cfg, all_socket_info, &stats, tun_fd, accept_map_fd);
+	rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd, accept_map_fd);
 
 	/* Cleanup */
-	close(tun_fd);
+	if ( tun_fd != -1)
+		close(tun_fd);
 	for (int q = 0; q < cfg.xsk_if_queue; q += 1) {
 		xsk_socket__delete(all_socket_info->xsk_socket_info[q]->xsk);
 	}
