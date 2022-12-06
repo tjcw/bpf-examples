@@ -395,10 +395,6 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 	struct xsk_socket_info *xsk_info;
 	int ret;
 
-	xsk_info = calloc(1, sizeof(*xsk_info));
-	if (!xsk_info)
-		return NULL;
-
 	/* Allocate memory for NUM_FRAMES of the default XDP frame size */
 	int packet_buffer_size = NUM_FRAMES * FRAME_SIZE * 2;
 	void *packet_buffer;
@@ -409,8 +405,8 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 			strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	configure_xsk_umem(&(xsk_info->umem), packet_buffer, packet_buffer_size,
-			   &(xsk_info->fq), &(xsk_info->cq));
+	configure_xsk_umem(&(tx_info->socket_info.umem), packet_buffer, packet_buffer_size,
+			   &(tx_info->socket_info.fq), &(tx_info->socket_info.cq));
 	xsk_cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
 	xsk_cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
 	xsk_cfg.libbpf_flags = 0;
@@ -418,9 +414,9 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 	xsk_cfg.bind_flags = cfg->xsk_bind_flags;
 	xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
 	ret = xsk_socket__create_shared(&tx_info->socket_info.xsk, cfg->redirect_ifname, 0,
-			&tx_info->socket_info.umem.umem, &tx_info->socket_info.rx,
-			&tx_info->socket_info.tx, &(&tx_info->socket_info.fq),
-					&(&tx_info->socket_info.cq), &xsk_cfg);
+			tx_info->socket_info.umem.umem, &tx_info->socket_info.rx,
+			&tx_info->socket_info.tx, &tx_info->socket_info.fq,
+					&tx_info->socket_info.cq, &xsk_cfg);
 
 	printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
 	if (ret)
@@ -442,7 +438,7 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 
 	xsk_ring_prod__submit(&tx_info->socket_info.fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
 
-	return xsk_info;
+	return tx_info;
 
 error_exit:
 	errno = -ret;
@@ -648,17 +644,17 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 
 
 	/* Collect/free completed TX buffers */
-	completed = xsk_ring_cons__peek(&xsk_tx->socket_info->umem->cq, // ???
+	completed = xsk_ring_cons__peek(&xsk_tx->socket_info->cq, // ???
 					XSK_RING_CONS__DEFAULT_NUM_DESCS,
 					&idx_cq);
 
 	if (completed > 0) {
 		for (int i = 0; i < completed; i++)
 			xsk_free_umem_frame(&xsk_tx->socket_info->umem,
-					    *xsk_ring_cons__comp_addr(&xsk_tx->socket_info->umem->cq,
+					    *xsk_ring_cons__comp_addr(&xsk_tx->socket_info->cq,
 								      idx_cq++));
 
-		xsk_ring_cons__release(&xsk_tx->socket_info->umem->cq, completed);
+		xsk_ring_cons__release(&xsk_tx->socket_info->cq, completed);
 		xsk_tx->outstanding_tx -= completed < xsk_tx->outstanding_tx ?
 			completed : xsk_tx->outstanding_tx;
 	}
