@@ -58,7 +58,7 @@ iptables -F FORWARD
     do
       echo 0 >${device}/rp_filter
     done
-    ../af_xdp_user -S -d veth2 -Q 1 --filename ../${FILTER}.o -a ${ns2_pid} -D vpeer2 &
+    ../af_xdp_user -S -d veth2 -Q 1 --filename ../${FILTER}.o -a ${ns2_pid} -r vpeer2 &
     af_pid=$!
     sleep 2
     ../filter-xdp_stats &
