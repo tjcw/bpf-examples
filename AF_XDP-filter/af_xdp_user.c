@@ -159,9 +159,11 @@ static const struct option_wrapper long_options[] = {
 	  true },
 	{ { "redirect-dev", required_argument, NULL, 'r' },
 	  "Redirect first packets to this output device",
+	  "<ifname>",
 	  true },
 	{ { "redirect-pid", required_argument, NULL, 'P' },
 	  "Redirect first packets to the namespace of this pid",
+	  "<pid>",
 	  true },
 
 	{ { "skb-mode", no_argument, NULL, 'S' },
@@ -415,10 +417,10 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 	xsk_cfg.xdp_flags = cfg->xdp_flags;
 	xsk_cfg.bind_flags = cfg->xsk_bind_flags;
 	xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
-	ret = xsk_socket__create_shared(&tx_info->socket_info->xsk, cfg->ifname, if_queue,
-			&tx_info->socket_info->umem.umem, &tx_info->socket_info->rx,
-			&tx_info->socket_info->tx, &(&tx_info->socket_info->fq),
-					&(&tx_info->socket_info->cq), &xsk_cfg);
+	ret = xsk_socket__create_shared(&tx_info->socket_info.xsk, cfg->redirect_ifname, 0,
+			&tx_info->socket_info.umem.umem, &tx_info->socket_info.rx,
+			&tx_info->socket_info.tx, &(&tx_info->socket_info.fq),
+					&(&tx_info->socket_info.cq), &xsk_cfg);
 
 	printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
 	if (ret)
@@ -426,7 +428,7 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 
 	/* Stuff the receive path with buffers, we assume we have enough */
 	__u32 idx;
-	ret = xsk_ring_prod__reserve(&tx_info->socket_info->fq,
+	ret = xsk_ring_prod__reserve(&tx_info->socket_info.fq,
 				     XSK_RING_PROD__DEFAULT_NUM_DESCS, &idx);
 
 	printf("xsk_ring_prod__reserve returns %d, XSK_RING_PROD__DEFAULT_NUM_DESCS is %d\n",
@@ -435,10 +437,10 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 		goto error_exit;
 
 	for (int i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS; i++)
-		*xsk_ring_prod__fill_addr(&tx_info->socket_info->fq, idx++) =
-			umem_alloc_umem_frame(&tx_info->socket_info->umem);
+		*xsk_ring_prod__fill_addr(&tx_info->socket_info.fq, idx++) =
+			umem_alloc_umem_frame(&tx_info->socket_info.umem);
 
-	xsk_ring_prod__submit(&tx_info->socket_info->fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
+	xsk_ring_prod__submit(&tx_info->socket_info.fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
 
 	return xsk_info;
 
@@ -611,15 +613,15 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
 
-				ssize_t ret = xsk_ring_prod__reserve(xsk_tx, 1, &tx_idx);
+				ssize_t ret = xsk_ring_prod__reserve(&(xsk_tx->socket_info.fq), 1, &tx_idx);
 				if (ret != 1) {
 					/* No more transmit slots, drop the packet */
 					return false;
 				}
 
-				xsk_ring_prod__tx_desc(xsk_tx, tx_idx)->addr = addr;
-				xsk_ring_prod__tx_desc(xsk_tx, tx_idx)->len = len;
-				xsk_ring_prod__submit(xsk_tx, 1);
+				xsk_ring_prod__tx_desc(&(xsk_tx->socket_info.tx), tx_idx)->addr = addr;
+				xsk_ring_prod__tx_desc(&(xsk_tx->socket_info.tx), tx_idx)->len = len;
+				xsk_ring_prod__submit(&(xsk_tx->socket_info.tx), 1);
 				xsk_tx->outstanding_tx++;
 
 				stats->stats.tx_bytes += len;
@@ -646,7 +648,7 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 
 
 	/* Collect/free completed TX buffers */
-	completed = xsk_ring_cons__peek(&xsk_tx->socket_info->umem->cq,
+	completed = xsk_ring_cons__peek(&xsk_tx->socket_info->umem->cq, // ???
 					XSK_RING_CONS__DEFAULT_NUM_DESCS,
 					&idx_cq);
 
@@ -717,6 +719,8 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 
 	stats->stats.rx_batch_count += 1;
 	xsk_ring_cons__release(&xsk_src->rx, rcvd);
+	/* Do we need to wake up the kernel for transmission */
+	complete_tx(xsk_tx);
 }
 
 static void rx_and_process(struct config *cfg,
@@ -1080,7 +1084,7 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		err=setns(fd, CLONE_NEWNET) ;
+		err=setns(setns_fd, CLONE_NEWNET) ;
 		if ( err == -1)
 		{
 			fprintf(stderr,
@@ -1089,7 +1093,7 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		tx_socket_info = xsk_configure_socket_tx(cfg) ;
+		tx_socket_info = xsk_configure_socket_tx(&cfg) ;
 		if ( tx_socket_info ==  NULL)
 		{
 			fprintf(stderr,
