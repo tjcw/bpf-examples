@@ -123,7 +123,7 @@ void parse_cmdline_args(int argc, char **argv,
 
 	/* Parse commands line args */
 	while ((opt = getopt_long(argc, argv,
-				  "hd:r:L:R:BASNFUMQ:G:H:czqp:ti:b:P:",
+				  "hd:r:L:R:BASNFUMQ:G:H:czqp:ti:b:a:",
 				  long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 'd':
@@ -159,7 +159,7 @@ void parse_cmdline_args(int argc, char **argv,
 				goto error;
 			}
 			break;
-		case 'P':
+		case 'a':
 			cfg->redirect_ifname_pid = atol(optarg);
 			break ;
 		case 'G':
