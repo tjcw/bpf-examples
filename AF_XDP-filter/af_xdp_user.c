@@ -1088,6 +1088,7 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(EXIT_FAILURE);
 		}
+		system("bash") ;
 		tx_socket_info = xsk_configure_socket_tx(&cfg) ;
 		if ( tx_socket_info ==  NULL)
 		{
