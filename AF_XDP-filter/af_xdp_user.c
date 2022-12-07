@@ -1088,7 +1088,7 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		fprintf(stderr, "about to sleep(3600)\n");
+		fprintf(stderr, "pid=%d about to sleep(3600)\n", getpid() );
 		errno=0;
 		int rc=sleep(3600) ;
 		fprintf(stderr, "sleep returns %d, errno=%d\n", rc, errno);
