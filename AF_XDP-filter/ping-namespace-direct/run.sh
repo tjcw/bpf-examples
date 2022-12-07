@@ -25,19 +25,11 @@ ip link set veth2 up
 ip link set vpeer1 netns ns1
 ip link set vpeer2 netns ns2
 
-ip tuntap add mode tun tun0
-ip link set dev tun0 down
-ip link set dev tun0 addr 10.10.0.30/24
-ip link set dev tun0 up
-
 ip link add br0 type bridge
 ip link set br0 up
 
 ip link set veth1 master br0
 ip link set veth2 master br0
-ip link set tun0 master br0
-
-ip link set dev tun0 netns ns2
 
 ip addr add 10.10.0.1/16 dev br0
 
@@ -81,8 +73,7 @@ if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_veth1_pid} ${tcpdump_veth2_pid} ${tcpdump_br0_pid}
   wait
-  chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
-  tcpdump -r tun0.tcpdump
+  chown root.root vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
   tcpdump -r veth1.tcpdump
   tcpdump -r veth2.tcpdump
   tcpdump -r vpeer2.tcpdump

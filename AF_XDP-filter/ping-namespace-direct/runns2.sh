@@ -10,8 +10,6 @@ ip addr add 10.10.0.20/16 dev vpeer2
 ip link set dev vpeer2 xdpgeneric off
 if [[ -n "${TCPDUMP}" ]]
 then
-  tcpdump -i tun0 -w tun0.tcpdump &
-  tcpdump_tun0_pid=$!
   tcpdump -i vpeer2 -w vpeer2.tcpdump &
   tcpdump_vpeer2_pid=$!
 fi
@@ -19,7 +17,6 @@ fi
 sleep 120
 if [[ -n "${TCPDUMP}" ]]
 then
-  kill -INT ${tcpdump_tun0_pid}
   kill -INT ${tcpdump_vpeer2_pid}
 fi
 wait
