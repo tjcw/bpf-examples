@@ -10,7 +10,7 @@ ip link delete veth2
 ip netns delete ns1
 ip netns delete ns2
 
-rm -f tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
+rm -f vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
 sleep 2
 
 ip netns add ns1
