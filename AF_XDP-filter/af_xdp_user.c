@@ -1089,7 +1089,10 @@ int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 		errno=0;
-		int rc=system("/bin/bash") ;
+		int rc=system("sleep 3600") ;
+		fprintf(stderr, "sleep returns %d, errno=%d\n", rc, errno);
+		errno=0;
+		rc=system("/bin/bash") ;
 		fprintf(stderr, "bash returns %d, errno=%d\n", rc, errno);
 		tx_socket_info = xsk_configure_socket_tx(&cfg) ;
 		if ( tx_socket_info ==  NULL)
