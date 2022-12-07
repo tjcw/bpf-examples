@@ -63,7 +63,7 @@ iptables -F FORWARD
     sleep 2
     ../filter-xdp_stats &
     filter_pid=$!
-    sleep 7200
+    sleep 120
     kill -TERM ${af_pid} ${filter_pid}
   fi 
   wait
