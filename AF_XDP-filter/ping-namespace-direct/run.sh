@@ -10,7 +10,7 @@ ip link delete veth2
 ip netns delete ns1
 ip netns delete ns2
 
-rm -f tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
+rm -f tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump
 sleep 2
 
 ip netns add ns1
@@ -44,6 +44,14 @@ ip addr add 10.10.0.1/16 dev br0
 iptables -P FORWARD ACCEPT
 iptables -F FORWARD
 
+if [[ -n "${TCPDUMP}" ]]
+then
+  tcpdump -i veth1 -w veth1.tcpdump &
+  tcpdump_veth1_pid=$!
+  tcpdump -i veth2 -w veth2.tcpdump &
+  tcpdump_veth2_pid=$!
+  sleep 2
+fi
 (
   ip netns exec ns2 ./runns2.sh &
   ns2_pid=$!
@@ -69,9 +77,13 @@ iptables -F FORWARD
 )
 if [[ -n "${TCPDUMP}" ]]
 then
-  chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
+  kill -INT ${tcpdump_veth1_pid} ${tcpdump_veth2_pid}
+  wait
+  chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump
   tcpdump -r tun0.tcpdump
-  tcpdump -r vpeer1.tcpdump
+  tcpdump -r veth1.tcpdump
+  tcpdump -r veth2.tcpdump
+  tcpdump -r vpeer2.tcpdump
   tcpdump -r vpeer2.tcpdump
 fi
 
