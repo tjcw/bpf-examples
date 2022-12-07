@@ -12,7 +12,7 @@ ip link set dev enp25s0 xdpgeneric off
 rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
 ip tuntap add mode tun tun0
 ip link set dev tun0 down
-ip link set dev tun0 addr 10.1.0.254/24
+ip addr add 10.1.0.254/24 dev tun0
 ip link set dev tun0 up
 if [[ -z "${LEAVE}" ]]
 then 

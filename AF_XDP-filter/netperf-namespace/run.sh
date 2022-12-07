@@ -29,7 +29,7 @@ ip link set vpeer2 netns ns2
 
 ip tuntap add mode tun tun0
 ip link set dev tun0 down
-ip link set dev tun0 addr 10.10.0.30/24
+ip addr add 10.10.0.30/24 dev tun0
 ip link set dev tun0 up
 
 ip link add br0 type bridge
