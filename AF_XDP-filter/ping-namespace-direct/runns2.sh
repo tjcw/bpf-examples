@@ -17,7 +17,6 @@ then
 fi
 
 sleep 120
-wait
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_tun0_pid}
