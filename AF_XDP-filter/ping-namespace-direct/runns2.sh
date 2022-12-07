@@ -4,7 +4,6 @@
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 # Set TCPDUMP env var non-null to take tcpdumps of the interfaces
-# Set PORT env var to select the port for netserver to listen on
 ip link set lo up
 ip link set vpeer2 up
 ip addr add 10.10.0.20/16 dev vpeer2
@@ -17,10 +16,7 @@ then
   tcpdump_vpeer2_pid=$!
 fi
 
-netserver -p ${PORT} -4 -D -f &
-netserver_pid=$!
 sleep 120
-kill -INT ${netserver_pid}  
 wait
 if [[ -n "${TCPDUMP}" ]]
 then

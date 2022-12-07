@@ -1,11 +1,9 @@
 #!/bin/bash -x
 # SPDX-License-Identifier: GPL-2.0
-# Run script for netperf throughput performance test between namespaces
+# Run script for ping functional between namespaces
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
-# Set TCP_RR env var non-null to include TCP_RR test 
 # Set TCPDUMP env var non-null if you want take tcpdumps of packets on the interfaces
-# Set PORT to indicate the port to use. Successive test shouuld have different port numbers because netserver leaves the old port in TIMED_WAIT
 ip link delete veth1
 ip link delete veth2
 
@@ -63,7 +61,7 @@ iptables -F FORWARD
     sleep 2
     ../filter-xdp_stats &
     filter_pid=$!
-    sleep 7200
+    sleep 120
     kill -TERM ${af_pid} ${filter_pid}
   fi 
   wait

@@ -1,6 +1,6 @@
 #!/bin/bash -x
 # SPDX-License-Identifier: GPL-2.0
-# Client side helper script to run netperf for TCP performance testing
+# Client side helper script to run ping forfinctional testing
 # in a namespace with the eBPF filter
 ip link set lo up
 ip link set vpeer1 up
@@ -11,12 +11,7 @@ then
   tcpdump_vpeer1_pid=$!
 fi
 sleep 6
-if [[ -n "TCP_RR" ]]
-then
-  netperf -4 -t TCP_RR -H 10.10.0.20 -p ${PORT} --
-fi
-netperf -4 -t TCP_STREAM -H 10.10.0.20 -p ${PORT} --
-netperf -4 -t TCP_CRR -H 10.10.0.20 -p ${PORT} --
+ping -c 5 10.10.0.20
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_vpeer1_pid}
