@@ -10,7 +10,7 @@ ip link delete veth2
 ip netns delete ns1
 ip netns delete ns2
 
-rm -f tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump
+rm -f tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
 sleep 2
 
 ip netns add ns1
@@ -50,6 +50,8 @@ then
   tcpdump_veth1_pid=$!
   tcpdump -i veth2 -w veth2.tcpdump &
   tcpdump_veth2_pid=$!
+  tcpdump -i br0 -w br0.tcpdump &
+  tcpdump_br0_pid=$!
   sleep 2
 fi
 (
@@ -77,13 +79,14 @@ fi
 )
 if [[ -n "${TCPDUMP}" ]]
 then
-  kill -INT ${tcpdump_veth1_pid} ${tcpdump_veth2_pid}
+  kill -INT ${tcpdump_veth1_pid} ${tcpdump_veth2_pid} ${tcpdump_br0_pid}
   wait
-  chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump
+  chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
   tcpdump -r tun0.tcpdump
   tcpdump -r veth1.tcpdump
   tcpdump -r veth2.tcpdump
   tcpdump -r vpeer2.tcpdump
   tcpdump -r vpeer2.tcpdump
+  tcpdump -r br0.tcpdump
 fi
 
