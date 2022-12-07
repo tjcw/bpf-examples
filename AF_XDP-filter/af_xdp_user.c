@@ -1088,12 +1088,13 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		fprintf(stderr, "pid=%d about to sleep(3600)\n", getpid() );
+//		fprintf(stderr, "pid=%d about to sleep(3600)\n", getpid() );
+//		errno=0;
+//		int rc=sleep(3600) ;
+//		fprintf(stderr, "sleep returns %d, errno=%d\n", rc, errno);
+		fprintf(stderr, "About to call /bin/bash\n") ;
 		errno=0;
-		int rc=sleep(3600) ;
-		fprintf(stderr, "sleep returns %d, errno=%d\n", rc, errno);
-		errno=0;
-		rc=system("/bin/bash") ;
+		int rc=system("/bin/bash") ;
 		fprintf(stderr, "bash returns %d, errno=%d\n", rc, errno);
 		tx_socket_info = xsk_configure_socket_tx(&cfg) ;
 		if ( tx_socket_info ==  NULL)
