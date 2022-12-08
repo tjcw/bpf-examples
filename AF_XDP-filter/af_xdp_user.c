@@ -69,7 +69,7 @@ enum {
 	k_skipping = false,
 	k_timestamp = true,
 	k_showpacket = true,
-	k_diagnose_setns = true
+	k_diagnose_setns = false
 };
 
 struct xsk_umem_info {
