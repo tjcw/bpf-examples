@@ -448,7 +448,7 @@ error_exit:
 static void show_fivetuple(struct fivetuple *f)
 {
 	if (k_verbose) {
-		fprintf(stdout,
+		fprintf(stderr,
 			"fivetuple saddr=%08x daddr=%08x sport=%04x dport=%04x protocol=%04x padding=%u\n",
 			f->saddr, f->daddr, f->sport, f->dport, f->protocol,
 			f->padding);
@@ -469,12 +469,12 @@ static bool filter_pass_tcp(int accept_map_fd, __u32 saddr, __u32 daddr,
 	int ret = bpf_map_lookup_elem(accept_map_fd, &f, &a);
 	if (ret == 0) {
 		if (k_verbose)
-			fprintf(stdout, "Value %d found in map\n", a);
+			fprintf(stderr, "Value %d found in map\n", a);
 		return a == XDP_PASS;
 	}
 	a = XDP_PASS;
 	if (k_verbose)
-		fprintf(stdout, "No value in map, setting to %d\n", a);
+		fprintf(stderr, "No value in map, setting to %d\n", a);
 	ret = bpf_map_update_elem(accept_map_fd, &f, &a, BPF_ANY);
 	return true;
 }
@@ -493,12 +493,12 @@ static bool filter_pass_udp(int accept_map_fd, __u32 saddr, __u32 daddr,
 	int ret = bpf_map_lookup_elem(accept_map_fd, &f, &a);
 	if (ret == 0) {
 		if (k_verbose)
-			fprintf(stdout, "Value %d found in map\n", a);
+			fprintf(stderr, "Value %d found in map\n", a);
 		return a == XDP_PASS;
 	}
 	a = XDP_PASS;
 	if (k_verbose)
-		fprintf(stdout, "No value in map, setting to %d\n", a);
+		fprintf(stderr, "No value in map, setting to %d\n", a);
 	ret = bpf_map_update_elem(accept_map_fd, &f, &a, BPF_ANY);
 	return true;
 }
@@ -517,15 +517,15 @@ static bool filter_pass_icmp(int accept_map_fd, __u32 saddr, __u32 daddr,
 	int ret = bpf_map_lookup_elem(accept_map_fd, &f, &a);
 	if (ret == 0) {
 		if (k_verbose)
-			fprintf(stdout, "Value %d found in map\n", a);
+			fprintf(stderr, "Value %d found in map\n", a);
 		return a == XDP_PASS;
 	}
 	a = XDP_PASS;
 	if (k_verbose)
-		fprintf(stdout, "No value in map, setting to %d\n", a);
+		fprintf(stderr, "No value in map, setting to %d\n", a);
 	ret = bpf_map_update_elem(accept_map_fd, &f, &a, BPF_ANY);
 	if (k_verbose)
-		fprintf(stdout, "bpf_map_update_elem returns %d\n", ret);
+		fprintf(stderr, "bpf_map_update_elem returns %d\n", ret);
 	return true;
 }
 static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_info *xsk_tx,
@@ -545,16 +545,16 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 		__u32 saddr = ntohl(ip->saddr);
 		__u32 daddr = ntohl(ip->daddr);
 		if (k_showpacket)
-			hexdump(stdout, ip, (len < 32) ? len : 32);
+			hexdump(stderr, ip, (len < 32) ? len : 32);
 		if (k_timestamp) {
 			struct timeval tv ;
 			gettimeofday(&tv, NULL) ;
 			double elapsed=(tv.tv_sec-stats->start_time.tv_sec)
 					+ 1e-6*(tv.tv_usec-stats->start_time.tv_usec) ;
-			fprintf(stdout, "timestamp %15.6f\n", elapsed) ;
+			fprintf(stderr, "timestamp %15.6f\n", elapsed) ;
 		}
 		if (k_instrument)
-			fprintf(stdout,
+			fprintf(stderr,
 				"iphdr ihl=0x%01x version=0x%01x tos=0x%02x "
 				"tot_len=0x%04x id=0x%04x flags=0x%02x frag_off=0x%04x ttl=0x%02x "
 				"protocol=0x%02x check=0x%04x saddr=0x%08x daddr=0x%08x\n",
@@ -592,9 +592,9 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 			{
 				ssize_t ret = write(tun_fd, write_addr, write_len);
 				if (k_instrument) {
-					hexdump(stdout, write_addr,
+					hexdump(stderr, write_addr,
 						(write_len < 32) ? write_len : 32);
-					fprintf(stdout, "Write length %lu actual %ld\n",
+					fprintf(stderr, "Write length %lu actual %ld\n",
 							write_len, ret);
 				}
 				if (ret != write_len) {
@@ -610,6 +610,12 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 				 * faster if you do batch processing/transmission */
 
 				ssize_t ret = xsk_ring_prod__reserve(&(xsk_tx->socket_info.fq), 1, &tx_idx);
+				if (k_instrument) {
+					hexdump(stderr, write_addr,
+						(write_len < 32) ? write_len : 32);
+					fprintf(stderr, "Write length %lu ret=%ld\n",
+							write_len, ret);
+				}
 				if (ret != 1) {
 					/* No more transmit slots, drop the packet */
 					return false;
@@ -636,7 +642,9 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 {
 	unsigned int completed;
 	uint32_t idx_cq;
-
+	if (k_instrument) {
+		fprintf(stderr, "complete_tx entry, outstanding_tx=%d\n", xsk_tx->outstanding_tx) ;
+	}
 	if (!xsk_tx->outstanding_tx)
 		return;
 
@@ -648,6 +656,10 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 					XSK_RING_CONS__DEFAULT_NUM_DESCS,
 					&idx_cq);
 
+	if (k_instrument) {
+		fprintf(stderr, "complete_tx completed=%u\n", completed) ;
+	}
+
 	if (completed > 0) {
 		for (int i = 0; i < completed; i++)
 			umem_free_umem_frame(&xsk_tx->socket_info.umem,
@@ -657,6 +669,9 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 		xsk_ring_cons__release(&xsk_tx->socket_info.cq, completed);
 		xsk_tx->outstanding_tx -= completed < xsk_tx->outstanding_tx ?
 			completed : xsk_tx->outstanding_tx;
+	}
+	if (k_instrument) {
+		fprintf(stderr, "complete_tx exit, outstanding_tx=%d\n", xsk_tx->outstanding_tx) ;
 	}
 }
 
@@ -840,7 +855,7 @@ static void *tun_read(void *arg)
 	int *tun_fd_p = arg;
 	int tun_fd = *tun_fd_p;
 	char buffer[k_buffersize];
-	fprintf(stdout, "tun_read thread running\n");
+	fprintf(stderr, "tun_read thread running\n");
 	while (!global_exit) {
 		ssize_t count = read(tun_fd, buffer, k_buffersize);
 		if (count < 0) {
@@ -849,11 +864,11 @@ static void *tun_read(void *arg)
 				err, strerror(err));
 			exit(EXIT_FAILURE);
 		} else if (count == 0) {
-			fprintf(stdout,
+			fprintf(stderr,
 				"tun_read unexpected zero length read\n");
 		} else {
-			fprintf(stdout, "tun_read\n");
-			hexdump(stdout, buffer, count);
+			fprintf(stderr, "tun_read\n");
+			hexdump(stderr, buffer, count);
 		}
 	}
 	return NULL;
