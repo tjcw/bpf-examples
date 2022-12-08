@@ -31,7 +31,8 @@
 #include <common/common_libbpf.h>
 
 enum {
-	k_xsk_poll_mode = true
+	k_xsk_poll_mode = true,
+	k_verbose = true
 };
 
 #define NUM_FRAMES         4096
@@ -592,7 +593,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Start thread to do statistics display */
-	if (verbose) {
+	if (k_verbose) {
 		ret = pthread_create(&stats_poll_thread, NULL, stats_poll,
 				     xsk_socket);
 		if (ret) {
