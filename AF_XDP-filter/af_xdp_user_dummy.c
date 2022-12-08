@@ -948,7 +948,7 @@ static void exit_application(int sig)
 //
 int main(int argc, char **argv)
 {
-	int ret;
+//	int ret;
 	struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
 	struct config cfg = {
 		.ifindex = -1,
@@ -963,14 +963,14 @@ int main(int argc, char **argv)
 	struct xdp_program *xdp_prog;
 	struct bpf_object *bpf_object = NULL;
 	int err;
-	pthread_t stats_poll_thread;
-	pthread_t tun_read_thread;
-	struct socket_stats stats;
-	int tun_fd;
-	char tun_name[IFNAMSIZ];
-	int xsks_map_fd;
+//	pthread_t stats_poll_thread;
+//	pthread_t tun_read_thread;
+//	struct socket_stats stats;
+//	int tun_fd;
+//	char tun_name[IFNAMSIZ];
+//	int xsks_map_fd;
 
-	int accept_map_fd;
+//	int accept_map_fd;
 //	struct tx_socket_info *tx_socket_info ;
 
 //	memset(&stats, 0, sizeof(stats));
