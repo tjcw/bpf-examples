@@ -11,7 +11,7 @@ then
   tcpdump_vpeer1_pid=$!
 fi
 sleep 6
-ping -c 5 10.10.0.20
+ping -c 2 10.10.0.20
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_vpeer1_pid}
