@@ -236,65 +236,65 @@
 //	return obj;
 //}
 
-//struct bpf_object *load_bpf_and_xdp_attach(struct config *cfg)
-//{
-//	struct bpf_program *bpf_prog;
-//	struct bpf_object *bpf_obj;
-//	int offload_ifindex = 0;
-//	int prog_fd = -1;
-//	int err;
-//
-//	/* If flags indicate hardware offload, supply ifindex */
-//	if (cfg->xdp_flags & XDP_FLAGS_HW_MODE)
-//		offload_ifindex = cfg->ifindex;
-//
-//	/* Load the BPF-ELF object file and get back libbpf bpf_object */
-//	if (cfg->reuse_maps)
-//		bpf_obj = load_bpf_object_file_reuse_maps(cfg->filename,
-//							  offload_ifindex,
-//							  cfg->pin_dir);
-//	else
-//		bpf_obj = load_bpf_object_file(cfg->filename, offload_ifindex);
-//	if (!bpf_obj) {
-//		fprintf(stderr, "ERR: loading file: %s\n", cfg->filename);
-//		exit(EXIT_FAIL_BPF);
-//	}
-//	/* At this point: All XDP/BPF programs from the cfg->filename have been
-//	 * loaded into the kernel, and evaluated by the verifier. Only one of
-//	 * these gets attached to XDP hook, the others will get freed once this
-//	 * process exit.
-//	 */
-//
-//	if (cfg->progsec[0])
-//		/* Find a matching BPF prog section name */
-//		bpf_prog = bpf_object__find_program_by_title(bpf_obj, cfg->progsec);
-//	else
-//		/* Find the first program */
-//		bpf_prog = bpf_program__next(NULL, bpf_obj);
-//
-//	if (!bpf_prog) {
-//		fprintf(stderr, "ERR: couldn't find a program in ELF section '%s'\n", cfg->progsec);
-//		exit(EXIT_FAIL_BPF);
-//	}
-//
-//	strncpy(cfg->progsec, bpf_program__title(bpf_prog, false), sizeof(cfg->progsec));
-//
-//	prog_fd = bpf_program__fd(bpf_prog);
-//	if (prog_fd <= 0) {
-//		fprintf(stderr, "ERR: bpf_program__fd failed\n");
-//		exit(EXIT_FAIL_BPF);
-//	}
-//
-//	/* At this point: BPF-progs are (only) loaded by the kernel, and prog_fd
-//	 * is our select file-descriptor handle. Next step is attaching this FD
-//	 * to a kernel hook point, in this case XDP net_device link-level hook.
-//	 */
-//	err = xdp_link_attach(cfg->ifindex, cfg->xdp_flags, prog_fd);
-//	if (err)
-//		exit(err);
-//
-//	return bpf_obj;
-//}
+struct bpf_object *load_bpf_and_xdp_attach(struct config *cfg)
+{
+	struct bpf_program *bpf_prog;
+	struct bpf_object *bpf_obj;
+	int offload_ifindex = 0;
+	int prog_fd = -1;
+	int err;
+
+	/* If flags indicate hardware offload, supply ifindex */
+	if (cfg->xdp_flags & XDP_FLAGS_HW_MODE)
+		offload_ifindex = cfg->ifindex;
+
+	/* Load the BPF-ELF object file and get back libbpf bpf_object */
+	if (cfg->reuse_maps)
+		bpf_obj = load_bpf_object_file_reuse_maps(cfg->filename,
+							  offload_ifindex,
+							  cfg->pin_dir);
+	else
+		bpf_obj = load_bpf_object_file(cfg->filename, offload_ifindex);
+	if (!bpf_obj) {
+		fprintf(stderr, "ERR: loading file: %s\n", cfg->filename);
+		exit(EXIT_FAIL_BPF);
+	}
+	/* At this point: All XDP/BPF programs from the cfg->filename have been
+	 * loaded into the kernel, and evaluated by the verifier. Only one of
+	 * these gets attached to XDP hook, the others will get freed once this
+	 * process exit.
+	 */
+
+	if (cfg->progsec[0])
+		/* Find a matching BPF prog section name */
+		bpf_prog = bpf_object__find_program_by_title(bpf_obj, cfg->progsec);
+	else
+		/* Find the first program */
+		bpf_prog = bpf_program__next(NULL, bpf_obj);
+
+	if (!bpf_prog) {
+		fprintf(stderr, "ERR: couldn't find a program in ELF section '%s'\n", cfg->progsec);
+		exit(EXIT_FAIL_BPF);
+	}
+
+	strncpy(cfg->progsec, bpf_program__title(bpf_prog, false), sizeof(cfg->progsec));
+
+	prog_fd = bpf_program__fd(bpf_prog);
+	if (prog_fd <= 0) {
+		fprintf(stderr, "ERR: bpf_program__fd failed\n");
+		exit(EXIT_FAIL_BPF);
+	}
+
+	/* At this point: BPF-progs are (only) loaded by the kernel, and prog_fd
+	 * is our select file-descriptor handle. Next step is attaching this FD
+	 * to a kernel hook point, in this case XDP net_device link-level hook.
+	 */
+	err = xdp_link_attach(cfg->ifindex, cfg->xdp_flags, prog_fd);
+	if (err)
+		exit(err);
+
+	return bpf_obj;
+}
 
 #define XDP_UNKNOWN XDP_REDIRECT + 1
 #ifndef XDP_ACTION_MAX
