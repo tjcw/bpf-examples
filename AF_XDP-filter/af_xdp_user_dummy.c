@@ -150,60 +150,60 @@ enum {
 //
 static const char *__doc__ = "AF_XDP kernel bypass example\n";
 //
-//static const struct option_wrapper long_options[] = {
-//
-//	{ { "help", no_argument, NULL, 'h' }, "Show help", false },
-//
-//	{ { "dev", required_argument, NULL, 'd' },
-//	  "Operate on device <ifname>",
-//	  "<ifname>",
-//	  true },
-//	{ { "redirect-dev", required_argument, NULL, 'r' },
-//	  "Redirect first packets to this output device",
-//	  "<ifname>",
-//	  true },
-//	{ { "redirect-pid", required_argument, NULL, 'P' },
-//	  "Redirect first packets to the namespace of this pid",
-//	  "<pid>",
-//	  true },
-//
-//	{ { "skb-mode", no_argument, NULL, 'S' },
-//	  "Install XDP program in SKB (AKA generic) mode" },
-//
-//	{ { "native-mode", no_argument, NULL, 'N' },
-//	  "Install XDP program in native mode" },
-//
-//	{ { "auto-mode", no_argument, NULL, 'A' },
-//	  "Auto-detect SKB or native mode" },
-//
-//	{ { "force", no_argument, NULL, 'F' },
-//	  "Force install, replacing existing program on interface" },
-//
-//	{ { "copy", no_argument, NULL, 'c' }, "Force copy mode" },
-//
-//	{ { "zero-copy", no_argument, NULL, 'z' }, "Force zero-copy mode" },
-//
-//	{ { "queue-count", required_argument, NULL, 'Q' },
-//	  "Configure interface receive queue count for AF_XDP" },
-//
-//	{ { "poll-mode", no_argument, NULL, 'p' },
-//	  "Use the poll() API waiting for packets to arrive" },
-//
-//	{ { "unload", no_argument, NULL, 'U' },
-//	  "Unload XDP program instead of loading" },
-//
-//	{ { "quiet", no_argument, NULL, 'q' }, "Quiet mode (no output)" },
-//
-//	{ { "filename", required_argument, NULL, 1 },
-//	  "Load program from <file>",
-//	  "<file>" },
-//
-//	{ { "progsec", required_argument, NULL, 2 },
-//	  "Load program in <section> of the ELF file",
-//	  "<section>" },
-//
-//	{ { 0, 0, NULL, 0 }, NULL, false }
-//};
+static const struct option_wrapper long_options[] = {
+
+	{ { "help", no_argument, NULL, 'h' }, "Show help", false },
+
+	{ { "dev", required_argument, NULL, 'd' },
+	  "Operate on device <ifname>",
+	  "<ifname>",
+	  true },
+	{ { "redirect-dev", required_argument, NULL, 'r' },
+	  "Redirect first packets to this output device",
+	  "<ifname>",
+	  true },
+	{ { "redirect-pid", required_argument, NULL, 'P' },
+	  "Redirect first packets to the namespace of this pid",
+	  "<pid>",
+	  true },
+
+	{ { "skb-mode", no_argument, NULL, 'S' },
+	  "Install XDP program in SKB (AKA generic) mode" },
+
+	{ { "native-mode", no_argument, NULL, 'N' },
+	  "Install XDP program in native mode" },
+
+	{ { "auto-mode", no_argument, NULL, 'A' },
+	  "Auto-detect SKB or native mode" },
+
+	{ { "force", no_argument, NULL, 'F' },
+	  "Force install, replacing existing program on interface" },
+
+	{ { "copy", no_argument, NULL, 'c' }, "Force copy mode" },
+
+	{ { "zero-copy", no_argument, NULL, 'z' }, "Force zero-copy mode" },
+
+	{ { "queue-count", required_argument, NULL, 'Q' },
+	  "Configure interface receive queue count for AF_XDP" },
+
+	{ { "poll-mode", no_argument, NULL, 'p' },
+	  "Use the poll() API waiting for packets to arrive" },
+
+	{ { "unload", no_argument, NULL, 'U' },
+	  "Unload XDP program instead of loading" },
+
+	{ { "quiet", no_argument, NULL, 'q' }, "Quiet mode (no output)" },
+
+	{ { "filename", required_argument, NULL, 1 },
+	  "Load program from <file>",
+	  "<file>" },
+
+	{ { "progsec", required_argument, NULL, 2 },
+	  "Load program in <section> of the ELF file",
+	  "<section>" },
+
+	{ { 0, 0, NULL, 0 }, NULL, false }
+};
 
 //enum { k_bytesperline = 16 };
 //static void hexdump1(FILE *out, const unsigned char *data, unsigned long offset,
@@ -950,16 +950,16 @@ int main(int argc, char **argv)
 {
 	int ret;
 	struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
-	struct config cfg = {
-		.ifindex = -1,
-		.redirect_ifindex = -1,
-		.xsk_if_queue = 1,
-		.do_unload = false,
-		.filename = "",
-		.progsec = "xdp_sock_0",
-		.redirect_ifname_pid = -1
-	};
-	struct all_socket_info *all_socket_info;
+//	struct config cfg = {
+//		.ifindex = -1,
+//		.redirect_ifindex = -1,
+//		.xsk_if_queue = 1,
+//		.do_unload = false,
+//		.filename = "",
+//		.progsec = "xdp_sock_0",
+//		.redirect_ifname_pid = -1
+//	};
+//	struct all_socket_info *all_socket_info;
 	struct xdp_program *xdp_prog;
 	struct bpf_object *bpf_object = NULL;
 	int err;
@@ -971,9 +971,9 @@ int main(int argc, char **argv)
 	int xsks_map_fd;
 
 	int accept_map_fd;
-	struct tx_socket_info *tx_socket_info ;
+//	struct tx_socket_info *tx_socket_info ;
 
-	memset(&stats, 0, sizeof(stats));
+//	memset(&stats, 0, sizeof(stats));
 
 	/* Global shutdown handler */
 	signal(SIGINT, exit_application);
