@@ -8,5 +8,5 @@ LIBBPF_DIR = ../libbpf/src/
 COMMON_DIR = ../common/
 LIB_DIR = ../lib/
 
-include $(COMMON_DIR)/common.mk
+include $(LIB_DIR)/common.mk
 LIBS += -lxdp -lz -lpthread
