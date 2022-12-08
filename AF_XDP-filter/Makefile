@@ -2,7 +2,7 @@
 
 
 STSTEM_LIBBPF := y
-BPF_TARGETS  := af_xdp_kern af_xdp_kern_passall
+BPF_TARGETS  := af_xdp_kern af_xdp_kern_passall af_xdp_kern_dummy
 USER_TARGETS := af_xdp_user filter-xdp_stats
 USER_TARGETS_OBJS := common_params.o common_user_bpf_xdp.o
 USER_LIBS := -lxdp -lbpf -lz
