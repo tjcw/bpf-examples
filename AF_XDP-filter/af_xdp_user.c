@@ -752,14 +752,19 @@ static void rx_and_process(struct config *cfg,
 
 	while (!global_exit) {
 		ret = poll(fds, nfds, -1);
+		if( k_instrument )
+			fprintf(stderr, "rx_and_process poll returns %d\n, ret") ;
 		if (ret <= 0 || ret > nfds)
 			continue;
 		for (int q = 0; q < nfds; q += 1) {
-			if (fds[q].revents & POLLIN)
+			if (fds[q].revents & POLLIN) {
+				if( k_instrument )
+					fprintf(stderr, "rx_and_process q=%d\n", q) ;
 				handle_receive_packets(
 					all_socket_info->xsk_socket_info[q],
 					tx_socket_info,
 					stats, tun_fd, accept_map_fd);
+			}
 		}
 	}
 }
