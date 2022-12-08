@@ -43,11 +43,11 @@
 #include <sys/syscall.h>      /* Definition of SYS_* constants */
 #include <sched.h>
 
-#include "common_params.h"
-#include "common_user_bpf_xdp.h"
-#include <common/common_libbpf.h>
-
-#include "af_xdp_kern_shared.h"
+//#include "common_params.h"
+//#include "common_user_bpf_xdp.h"
+//#include <common/common_libbpf.h>
+//
+//#include "af_xdp_kern_shared.h"
 
 #define NUM_FRAMES 4096
 #define FRAME_SIZE XSK_UMEM__DEFAULT_FRAME_SIZE
