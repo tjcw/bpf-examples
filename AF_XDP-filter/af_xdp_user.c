@@ -609,7 +609,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
 
-				ssize_t ret = xsk_ring_prod__reserve(&(xsk_tx->socket_info.fq), 1, &tx_idx);
+				ssize_t ret = xsk_ring_prod__reserve(&(xsk_tx->socket_info.tx), 1, &tx_idx);
 				if (k_instrument) {
 					hexdump(stderr, write_addr,
 						(write_len < 32) ? write_len : 32);
