@@ -61,15 +61,15 @@
 const char *pin_basedir = "/sys/fs/bpf";
 
 enum {
-	k_instrument = false,
+	k_instrument = true,
 	k_instrument_detail = false,
 	k_receive_tuntap = false,
 	k_verify_umem = false,
 	k_verbose = true,
 	k_skipping = false,
-	k_timestamp = false,
-	k_showpacket = false,
-	k_diagnose_setns = false
+	k_timestamp = true,
+	k_showpacket = true,
+	k_diagnose_setns = true
 };
 
 struct xsk_umem_info {
