@@ -4,8 +4,9 @@
 XDP_TARGETS  := af_xdp_kern
 USER_TARGETS := af_xdp_user
 
-LIBBPF_DIR = ../../libbpf/src/
+LIBBPF_DIR = ../libbpf/src/
 COMMON_DIR = ../common/
+LIB_DIR = ../lib/
 
 include $(COMMON_DIR)/common.mk
 LIBS += -lxdp -lz -lpthread
