@@ -159,6 +159,7 @@ static void stats_print(struct stats_record *stats_rec,
 		       rec->total.rx_bytes / 1000, bps, period);
 	}
 	printf("\n");
+	fflush(stdout) ;
 }
 
 /* BPF_MAP_TYPE_ARRAY */
@@ -261,6 +262,7 @@ static int stats_poll(const char *pin_dir, int map_fd, __u32 id, __u32 map_type,
 			return EXIT_FAIL_BPF;
 		} else if (id != info.id) {
 			printf("BPF map xdp_stats_map changed its ID, restarting\n");
+			fflush(stdout) ;
 			close(map_fd);
 			return 0;
 		}
@@ -316,6 +318,7 @@ int main(int argc, char **argv)
 			       " key_size:%d value_size:%d max_entries:%d\n",
 			       info.type, info.id, info.name, info.key_size,
 			       info.value_size, info.max_entries);
+			fflush(stdout) ;
 		}
 
 		err = stats_poll(pin_basedir, stats_map_fd, info.id, info.type,
