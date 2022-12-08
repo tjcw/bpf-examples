@@ -197,9 +197,9 @@ static struct xsk_socket_info *xsk_configure_socket(struct config *cfg,
 	if (ret)
 		goto error_exit;
 
-	ret = bpf_get_link_xdp_id(cfg->ifindex, &prog_id, cfg->xdp_flags);
-	if (ret)
-		goto error_exit;
+//	ret = bpf_get_link_xdp_id(cfg->ifindex, &prog_id, cfg->xdp_flags);
+//	if (ret)
+//		goto error_exit;
 
 	/* Initialize umem frame allocation */
 
@@ -533,9 +533,9 @@ int main(int argc, char **argv)
 		return EXIT_FAIL_OPTION;
 	}
 
-	/* Unload XDP program if requested */
-	if (cfg.do_unload)
-		return xdp_link_detach(cfg.ifindex, cfg.xdp_flags, 0);
+//	/* Unload XDP program if requested */
+//	if (cfg.do_unload)
+//		return xdp_link_detach(cfg.ifindex, cfg.xdp_flags, 0);
 
 	/* Load custom program if configured */
 	if (cfg.filename[0] != 0) {
@@ -609,7 +609,7 @@ int main(int argc, char **argv)
 	/* Cleanup */
 	xsk_socket__delete(xsk_socket->xsk);
 	xsk_umem__delete(umem->umem);
-	xdp_link_detach(cfg.ifindex, cfg.xdp_flags, 0);
+//	xdp_link_detach(cfg.ifindex, cfg.xdp_flags, 0);
 
 	return EXIT_OK;
 }
