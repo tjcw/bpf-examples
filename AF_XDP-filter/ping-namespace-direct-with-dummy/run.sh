@@ -59,13 +59,17 @@ fi
       echo 0 >${device}/rp_filter
     done
 #    ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -a ${ns2_pid} -r vpeer2 &
-    ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -a 1 -r br0 &
+#    ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -a 1 -r br0 &
+    ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -r veth2 &
     af_pid=$!
+    ../af_xdp_user_dummy -S -d veth2 -Q 1 --filename ../af_xdp_user_dummy.o &
+    af_pid_dummy=$!
     sleep 2
     ../filter-xdp_stats &
     filter_pid=$!
     sleep 120
-    kill -TERM ${af_pid} ${filter_pid}
+    kill -INT ${af_pid} ${af_pid_dummy}
+    kill -TERM ${filter_pid}
   fi 
   wait
 
