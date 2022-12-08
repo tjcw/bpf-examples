@@ -12,7 +12,7 @@ ip link delete veth2
 ip netns delete ns1
 ip netns delete ns2
 
-rm -f tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
+rm -f vpeer1.tcpdump vpeer2.tcpdump
 sleep 2
 
 ip netns add ns1
@@ -26,11 +26,6 @@ ip link set veth2 up
 
 ip link set vpeer1 netns ns1
 ip link set vpeer2 netns ns2
-
-ip tuntap add mode tun tun0
-ip link set dev tun0 down
-ip addr add 10.10.0.30/24 dev tun0
-ip link set dev tun0 up
 
 ip link add br0 type bridge
 ip link set br0 up
@@ -71,8 +66,7 @@ iptables -F FORWARD
 )
 if [[ -n "${TCPDUMP}" ]]
 then
-  chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump
-  tcpdump -r tun0.tcpdump
+  chown root.root vpeer1.tcpdump vpeer2.tcpdump
   tcpdump -r vpeer1.tcpdump
   tcpdump -r vpeer2.tcpdump
 fi
