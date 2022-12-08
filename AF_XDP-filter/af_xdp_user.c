@@ -65,7 +65,7 @@ enum {
 	k_instrument_detail = false,
 	k_receive_tuntap = false,
 	k_verify_umem = false,
-	k_verbose = false,
+	k_verbose = true,
 	k_skipping = false,
 	k_timestamp = false,
 	k_showpacket = false,
