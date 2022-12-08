@@ -30,6 +30,9 @@
 #include "common_user_bpf_xdp.h"
 #include <common/common_libbpf.h>
 
+enum {
+	k_xsk_poll_mode = true
+};
 
 #define NUM_FRAMES         4096
 #define FRAME_SIZE         XSK_UMEM__DEFAULT_FRAME_SIZE
@@ -398,7 +401,7 @@ static void rx_and_process(struct config *cfg,
 	fds[0].events = POLLIN;
 
 	while(!global_exit) {
-		if (cfg->xsk_poll_mode) {
+		if (k_xsk_poll_mode) {
 			ret = poll(fds, nfds, -1);
 			if (ret <= 0 || ret > 1)
 				continue;
