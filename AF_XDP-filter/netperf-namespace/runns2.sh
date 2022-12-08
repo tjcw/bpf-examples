@@ -8,6 +8,7 @@ ip link set lo up
 ip link set vpeer2 up
 ip addr add 10.10.0.20/16 dev vpeer2
 ip link set dev vpeer2 xdpgeneric off
+ip link set dev tun0 up
 if [[ -n "${TCPDUMP}" ]]
 then
   tcpdump -i tun0 -w tun0.tcpdump &
