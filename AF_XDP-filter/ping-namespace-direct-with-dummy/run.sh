@@ -61,8 +61,8 @@ fi
     done
     destination_mac=$(ip a s dev br0|awk '{ if($1 == "link/ether") { print $2 } }')
     source_mac=$(ip a s dev veth2|awk '{ if($1 == "link/ether") { print $2 } }')
-## Give a shell prompt here so I can explore what MAC addresses really need giving to af_xdp_user
-#    bash
+# Give a shell prompt here so I can explore what MAC addresses really need giving to af_xdp_user
+    bash
     DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -r veth2 -a 1 &
     af_pid=$!
     sleep 2
