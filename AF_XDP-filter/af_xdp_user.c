@@ -122,8 +122,8 @@ struct all_socket_info {
 struct tx_socket_info {
 	struct xsk_socket_info socket_info;
 	int outstanding_tx;
-	char src_mac[ETH_ALEN];
-	char dst_mac[ETH_ALEN];
+	unsigned char src_mac[ETH_ALEN];
+	unsigned char dst_mac[ETH_ALEN];
 };
 
 struct socket_stats {
@@ -950,11 +950,11 @@ static int open_bpf_map_file(const char *pin_dir, const char *mapname,
 	return fd;
 }
 
-static void set_mac(char macaddr[ETH_ALEN], const char *env)
+static void set_mac(unsigned char macaddr[ETH_ALEN], const char *env)
 {
 	memset(macaddr, 0, ETH_ALEN) ;
 	if ( env != NULL) {
-		int mac0 , mac1, mac2, mac3, mac4, mac5 ;
+		unsigned int mac0 , mac1, mac2, mac3, mac4, mac5 ;
 		sscanf(env, "%02x:%02x:%02x:%02x:%02x:%02x",
 				&mac0, &mac1, &mac2, &mac3, &mac4, &mac5) ;
 		macaddr[0] = mac0 ;
