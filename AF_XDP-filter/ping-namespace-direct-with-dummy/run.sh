@@ -58,8 +58,8 @@ fi
     do
       echo 0 >${device}/rp_filter
     done
-    destination_mac=$(ip a s dev veth2|awk 'if($1 == "link/ether") { print $2 }')
-    source_mac=$(ip a s dev veth2|awk 'if($1 == "link/ether") { print $2 }')
+    destination_mac=$(ip a s dev veth2|awk '{ if($1 == "link/ether") { print $2 } }')
+    source_mac=$(ip a s dev veth2|awk '{ if($1 == "link/ether") { print $2 } }')
     DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -r veth2 &
     af_pid=$!
     ../af_xdp_user_dummy -S -d veth2 -Q 1 --filename ../af_xdp_user_dummy.o &

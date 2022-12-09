@@ -53,8 +53,8 @@ iptables -F FORWARD
     do
       echo 0 >${device}/rp_filter
     done
-    destination_mac=$(ip a s dev vpeer2|awk 'if($1 == "link/ether") { print $2 }')
-    source_mac=$(ip a s dev vpeer2|awk 'if($1 == "link/ether") { print $2 }')
+    destination_mac=$(ip a s dev vpeer2|awk '{ if($1 == "link/ether") { print $2 } }')
+    source_mac=$(ip a s dev vpeer2|awk '{ if($1 == "link/ether") { print $2 } }')
     DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../af_xdp_user -S -d veth2 -Q 1 --filename ../${FILTER}.o -a ${ns2_pid} -r vpeer2 &
     af_pid=$!
     sleep 2
