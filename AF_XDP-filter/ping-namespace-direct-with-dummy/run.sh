@@ -59,7 +59,7 @@ fi
     do
       echo 0 >${device}/rp_filter
     done
-    destination_mac=$(ip a s dev br0|awk '{ if($1 == "link/ether") { print $2 } }')
+    destination_mac=$(ip netns exec ns2 ip a s dev vpeer2|awk '{ if($1 == "link/ether") { print $2 } }')
     source_mac=$(ip a s dev veth2|awk '{ if($1 == "link/ether") { print $2 } }')
 # Give a shell prompt here so I can explore what MAC addresses really need giving to af_xdp_user
     bash
