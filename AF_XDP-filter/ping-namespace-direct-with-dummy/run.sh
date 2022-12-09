@@ -59,6 +59,7 @@ fi
     do
       echo 0 >${device}/rp_filter
     done
+    iptables -A INPUT -j LOG
     destination_mac=$(ip netns exec ns2 ip a s dev vpeer2|awk '{ if($1 == "link/ether") { print $2 } }')
     source_mac=$(ip a s dev veth2|awk '{ if($1 == "link/ether") { print $2 } }')
 ## Give a shell prompt here so I can explore what MAC addresses really need giving to af_xdp_user
@@ -72,6 +73,7 @@ fi
     ../filter-xdp_stats &
     filter_pid=$!
     sleep 120
+    iptables -F INPUT
     kill -INT ${af_pid} ${af_pid_dummy}
     kill -TERM ${filter_pid}
   fi 
