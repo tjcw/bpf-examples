@@ -1124,37 +1124,41 @@ int main(int argc, char **argv)
 	} else {
 		/* First frames to be handled by AF_XDP send */
 		tun_fd=-1 ;
-		int setns_fd = syscall(SYS_pidfd_open,cfg.redirect_ifname_pid, 0) ;
-		if (setns_fd == -1)
-		{
-			fprintf(stderr,
-				"ERROR: Failed calling pidfd_open) "
-				"\"%s\"\n",
-				strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		fprintf(stderr, "setns_fd=%d\n", setns_fd) ;
-		err=setns(setns_fd, CLONE_NEWNET) ;
-		if ( err == -1)
-		{
-			fprintf(stderr,
-				"ERROR: Failed calling setns) "
-				"\"%s\"\n",
-				strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		fprintf(stderr, "setns returns %d\n", err) ;
-		if ( k_diagnose_setns )
-		{
-			int rc;
-			fprintf(stderr, "pid=%d about to sleep(3600)\n", getpid() );
-			errno=0;
-			rc=sleep(3600) ;
-			fprintf(stderr, "sleep returns %d, errno=%d\n", rc, errno);
-			fprintf(stderr, "About to call /bin/bash\n") ;
-			errno=0;
-			rc=system("/bin/bash") ;
-			fprintf(stderr, "bash returns %d, errno=%d\n", rc, errno);
+		/* A pid of 1 would mean 'init', where the setns would be to the root namespace */
+		/* Interpret this as a dummy */
+		if ( cfg.redirect_ifname_pid != 1) {
+			int setns_fd = syscall(SYS_pidfd_open,cfg.redirect_ifname_pid, 0) ;
+			if (setns_fd == -1)
+			{
+				fprintf(stderr,
+					"ERROR: Failed calling pidfd_open) "
+					"\"%s\"\n",
+					strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+			fprintf(stderr, "setns_fd=%d\n", setns_fd) ;
+			err=setns(setns_fd, CLONE_NEWNET) ;
+			if ( err == -1)
+			{
+				fprintf(stderr,
+					"ERROR: Failed calling setns) "
+					"\"%s\"\n",
+					strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+			fprintf(stderr, "setns returns %d\n", err) ;
+			if ( k_diagnose_setns )
+			{
+				int rc;
+				fprintf(stderr, "pid=%d about to sleep(3600)\n", getpid() );
+				errno=0;
+				rc=sleep(3600) ;
+				fprintf(stderr, "sleep returns %d, errno=%d\n", rc, errno);
+				fprintf(stderr, "About to call /bin/bash\n") ;
+				errno=0;
+				rc=system("/bin/bash") ;
+				fprintf(stderr, "bash returns %d, errno=%d\n", rc, errno);
+			}
 		}
 		tx_socket_info = xsk_configure_socket_tx(&cfg) ;
 		if ( tx_socket_info ==  NULL)
