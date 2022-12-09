@@ -228,6 +228,17 @@ static void hexdump(FILE *out, const void *data, unsigned long length)
 		hexdump1(out, cdata, (fullcount * k_bytesperline), tailcount);
 	fprintf(out, "\n");
 }
+static void show_mac(unsigned char macaddr[ETH_ALEN]) {
+	fprintf(stderr, "%02x:%02x:%02x:%02x:%02x:%02x",
+			macaddr[0],
+			macaddr[1],
+			macaddr[2],
+			macaddr[3],
+			macaddr[4],
+			macaddr[5]
+			) ;
+}
+
 static bool global_exit;
 
 static struct xsk_umem_info *configure_xsk_umem(struct xsk_umem_info *umem,
@@ -988,16 +999,6 @@ static void set_mac(unsigned char macaddr[ETH_ALEN], const char *env)
 	}
 }
 
-static void show_mac(unsigned char macaddr[ETH_ALEN]) {
-	fprintf(stderr, "%02x:%02x:%02x:%02x:%02x:%02x",
-			macaddr[0],
-			macaddr[1],
-			macaddr[2],
-			macaddr[3],
-			macaddr[4],
-			macaddr[5]
-			) ;
-}
 const char *pin_dir = "/sys/fs/bpf";
 const char *map_name = "accept_map";
 
