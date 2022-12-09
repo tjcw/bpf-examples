@@ -118,9 +118,12 @@ struct xsk_socket {
 struct all_socket_info {
 	struct xsk_socket_info *xsk_socket_info[k_rx_queue_count_max];
 };
+
 struct tx_socket_info {
 	struct xsk_socket_info socket_info;
 	int outstanding_tx;
+	char src_mac[ETH_ALEN];
+	char dst_mac[ETH_ALEN];
 };
 
 struct socket_stats {
@@ -621,6 +624,10 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 					return false;
 				}
 
+				/* Swap in the revised mac addresses */
+				memset(eth->h_source, xsk_tx->src_mac, ETH_ALEN) ;
+				memset(eth->h_dest, xsk_tx->dst_mac, ETH_ALEN) ;
+
 				xsk_ring_prod__tx_desc(&(xsk_tx->socket_info.tx), tx_idx)->addr = addr;
 				xsk_ring_prod__tx_desc(&(xsk_tx->socket_info.tx), tx_idx)->len = len;
 				xsk_ring_prod__submit(&(xsk_tx->socket_info.tx), 1);
@@ -943,6 +950,31 @@ static int open_bpf_map_file(const char *pin_dir, const char *mapname,
 	return fd;
 }
 
+static void set_mac(char macaddr[ETH_ALEN], const char *env)
+{
+	memset(macaddr, 0, ETH_ALEN) ;
+	if ( env != NULL) {
+		int mac0 , mac1, mac2, mac3, mac4, mac5 ;
+		sscanf(env, "%02x:%02x:%02x:%02x:%02x:%02x",
+				&mac0, &mac1, &mac2, &mac3, &mac4, &mac5) ;
+		macaddr[0] = mac0 ;
+		macaddr[1] = mac1 ;
+		macaddr[2] = mac2 ;
+		macaddr[3] = mac3 ;
+		macaddr[4] = mac4 ;
+		macaddr[5] = mac5 ;
+		if ( k_instrument ) {
+			fprintf(stderr, "mac=%02x:%02x:%02x:%02x:%02x:%02x\n",
+					macaddr[0],
+					macaddr[1],
+					macaddr[2],
+					macaddr[3],
+					macaddr[4],
+					macaddr[5]
+					) ;
+		}
+	}
+}
 const char *pin_dir = "/sys/fs/bpf";
 const char *map_name = "accept_map";
 
@@ -980,6 +1012,9 @@ int main(int argc, char **argv)
 
 	/* Cmdline options can change progsec */
 	parse_cmdline_args(argc, argv, long_options, &cfg, __doc__);
+
+	set_mac(tx_socket_info->src_mac, getenv("SRC_MAC")) ;
+	set_mac(tx_socket_info->dst_mac, getenv("DST_MAC")) ;
 
 	/* Required option */
 	if (cfg.ifindex == -1) {
