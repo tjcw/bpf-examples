@@ -751,8 +751,11 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 		if (k_instrument)
 			printf("addr=0x%lx len=%u transmitted=%u\n", addr, len,
 			       transmitted);
-		if (!transmitted)
+		if (!transmitted) {
+			printf("addr=0x%lx len=%u transmitted=%u calling umem_free_umem_frame\n", addr, len,
+			       transmitted);
 			umem_free_umem_frame(&xsk_src->umem, addr);
+		}
 
 		stats->stats.rx_bytes += len;
 		stats->stats.rx_packets += 1;
