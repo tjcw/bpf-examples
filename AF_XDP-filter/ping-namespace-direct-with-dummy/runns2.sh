@@ -10,7 +10,7 @@ ip addr add 10.10.0.20/16 dev vpeer2
 ip link set dev vpeer2 xdpgeneric off
 if [[ -n "${TCPDUMP}" ]]
 then
-  tcpdump -i vpeer2 -w vpeer2.tcpdump &
+  tcpdump -i vpeer2 -w vpeer2.tcpdump not ip6 &
   tcpdump_vpeer2_pid=$!
 fi
 
