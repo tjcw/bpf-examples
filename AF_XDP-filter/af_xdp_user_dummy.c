@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 		return EXIT_FAIL_OPTION;
 	}
 
-	struct bpf_map *xsks_map;
+//	struct bpf_map *xsks_map;
 	/* Load custom program if configured */
 	fprintf(stderr, "main cfg.filename=%s\n", cfg.filename);
 	if (cfg.filename[0] == 0) {
@@ -180,19 +180,19 @@ int main(int argc, char **argv)
 		fprintf(stderr, "ERROR:xdp_program__bpf_obj returns NULL\n");
 		exit(EXIT_FAILURE);
 	}
-	xsks_map = bpf_object__find_map_by_name(bpf_object, "xsks_map");
-	if (xsks_map == NULL) {
-		fprintf(stderr,
-			"ERROR:bpf_object__find_map_by_name returns NULL\n");
-		exit(EXIT_FAILURE);
-	}
-	err = bpf_map__set_max_entries(xsks_map, cfg.xsk_if_queue);
-	if (err != 0) {
-		fprintf(stderr,
-			"ERROR:bpf_map__set_max_entries returns %d %s\n", err,
-			strerror(err));
-		exit(EXIT_FAILURE);
-	}
+//	xsks_map = bpf_object__find_map_by_name(bpf_object, "xsks_map");
+//	if (xsks_map == NULL) {
+//		fprintf(stderr,
+//			"ERROR:bpf_object__find_map_by_name returns NULL\n");
+//		exit(EXIT_FAILURE);
+//	}
+//	err = bpf_map__set_max_entries(xsks_map, cfg.xsk_if_queue);
+//	if (err != 0) {
+//		fprintf(stderr,
+//			"ERROR:bpf_map__set_max_entries returns %d %s\n", err,
+//			strerror(err));
+//		exit(EXIT_FAILURE);
+//	}
 	/* Allow unlimited locking of memory, so all memory needed for packet
 	 * buffers can be locked.
 	 */

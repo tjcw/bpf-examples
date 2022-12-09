@@ -63,6 +63,7 @@ fi
     source_mac=$(ip a s dev veth2|awk '{ if($1 == "link/ether") { print $2 } }')
     DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -r veth2 &
     af_pid=$!
+    sleep 2
     ../af_xdp_user_dummy -S -d veth2 -Q 1 --filename ../af_xdp_kern_dummy.o &
     af_pid_dummy=$!
     sleep 2
