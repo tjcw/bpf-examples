@@ -38,11 +38,11 @@ iptables -F FORWARD
 
 if [[ -n "${TCPDUMP}" ]]
 then
-  tcpdump -i veth1 -w veth1.tcpdump &
+  tcpdump -i veth1 -w veth1.tcpdump not ip6 &
   tcpdump_veth1_pid=$!
-  tcpdump -i veth2 -w veth2.tcpdump &
+  tcpdump -i veth2 -w veth2.tcpdump not ip6 &
   tcpdump_veth2_pid=$!
-  tcpdump -i br0 -w br0.tcpdump &
+  tcpdump -i br0 -w br0.tcpdump not ip6 &
   tcpdump_br0_pid=$!
   sleep 2
 fi
