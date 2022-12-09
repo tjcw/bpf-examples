@@ -625,8 +625,8 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 				}
 
 				/* Swap in the revised mac addresses */
-				memset(eth->h_source, xsk_tx->src_mac, ETH_ALEN) ;
-				memset(eth->h_dest, xsk_tx->dst_mac, ETH_ALEN) ;
+				memcpy(eth->h_source, xsk_tx->src_mac, ETH_ALEN) ;
+				memcpy(eth->h_dest, xsk_tx->dst_mac, ETH_ALEN) ;
 
 				xsk_ring_prod__tx_desc(&(xsk_tx->socket_info.tx), tx_idx)->addr = addr;
 				xsk_ring_prod__tx_desc(&(xsk_tx->socket_info.tx), tx_idx)->len = len;
@@ -1013,9 +1013,6 @@ int main(int argc, char **argv)
 	/* Cmdline options can change progsec */
 	parse_cmdline_args(argc, argv, long_options, &cfg, __doc__);
 
-	set_mac(tx_socket_info->src_mac, getenv("SRC_MAC")) ;
-	set_mac(tx_socket_info->dst_mac, getenv("DST_MAC")) ;
-
 	/* Required option */
 	if (cfg.ifindex == -1) {
 		fprintf(stderr, "ERROR: Required option --dev missing\n\n");
@@ -1168,6 +1165,8 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(EXIT_FAILURE);
 		}
+		set_mac(tx_socket_info->src_mac, getenv("SRC_MAC")) ;
+		set_mac(tx_socket_info->dst_mac, getenv("DST_MAC")) ;
 	}
 
 	accept_map_fd = open_bpf_map_file(pin_basedir, "accept_map", &info);
