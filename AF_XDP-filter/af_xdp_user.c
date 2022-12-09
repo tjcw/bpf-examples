@@ -691,10 +691,14 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 	}
 
 	if (completed > 0) {
-		for (int i = 0; i < completed; i++)
+		for (int i = 0; i < completed; i++) {
+			if (k_instrument) {
+				fprintf(stderr, "calling umem_free_umem_frame i=%d\n",i) ;
+			}
 			umem_free_umem_frame(&xsk_tx->socket_info.umem,
 					    *xsk_ring_cons__comp_addr(&xsk_tx->socket_info.cq,
 								      idx_cq++));
+		}
 
 		xsk_ring_cons__release(&xsk_tx->socket_info.cq, completed);
 		xsk_tx->outstanding_tx -= completed < xsk_tx->outstanding_tx ?
