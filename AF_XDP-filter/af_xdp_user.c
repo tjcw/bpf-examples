@@ -625,6 +625,18 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 				}
 
 				/* Swap in the revised mac addresses */
+				if ( k_instrument ) {
+					fprintf(stderr,"Swapping source mac from " ) ;
+					show_mac(eth->h_source) ;
+					fprintf(stderr," to ") ;
+					show_mac(xsk_tx->src_mac) ;
+					fprintf(stderr," and dst mac from " ) ;
+					show_mac(eth->h_dest) ;
+					fprintf(stderr," to ") ;
+					show_mac(xsk_tx->dst_mac) ;
+					fprintf(stderr, "\n") ;
+
+				}
 				memcpy(eth->h_source, xsk_tx->src_mac, ETH_ALEN) ;
 				memcpy(eth->h_dest, xsk_tx->dst_mac, ETH_ALEN) ;
 
@@ -974,6 +986,17 @@ static void set_mac(unsigned char macaddr[ETH_ALEN], const char *env)
 					) ;
 		}
 	}
+}
+
+static void show_mac(unsigned char macaddr[ETH_ALEN]) {
+	fprintf(stderr, "%02x:%02x:%02x:%02x:%02x:%02x",
+			macaddr[0],
+			macaddr[1],
+			macaddr[2],
+			macaddr[3],
+			macaddr[4],
+			macaddr[5]
+			) ;
 }
 const char *pin_dir = "/sys/fs/bpf";
 const char *map_name = "accept_map";
