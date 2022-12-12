@@ -69,7 +69,8 @@ enum {
 	k_skipping = false,
 	k_timestamp = true,
 	k_showpacket = true,
-	k_diagnose_setns = false
+	k_diagnose_setns = false,
+	k_transmit_to_receiver = true
 };
 
 struct xsk_umem_info {
@@ -106,6 +107,7 @@ struct xsk_socket_info {
 	struct xsk_ring_cons cq;
 	struct xsk_umem_info umem;
 	struct xsk_socket *xsk;
+	int outstanding_tx;
 };
 struct xsk_socket {
 	struct xsk_ring_cons *rx;
@@ -625,56 +627,61 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				/* Here we sent the packet out of the receive port. Note that
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
-				uint64_t tx_addr=umem_alloc_umem_frame(&xsk_tx->socket_info.umem);
-				uint8_t *tx_pkt = xsk_umem__get_data(xsk_tx->socket_info.umem.buffer, tx_addr);
+				if (k_transmit_to_receiver) {
+					xsk_ring_prod__submit(&(xsk_src->xsk->tx),
+								  1);
+				} else {
+					uint64_t tx_addr=umem_alloc_umem_frame(&xsk_tx->socket_info.umem);
+					uint8_t *tx_pkt = xsk_umem__get_data(xsk_tx->socket_info.umem.buffer, tx_addr);
 
-				memcpy(tx_pkt, pkt, len) ; // Copy the packet from the receive buffer to the transmit buffer
-				struct ethhdr *tx_eth = (struct ethhdr *)tx_pkt;
-				ssize_t ret = xsk_ring_prod__reserve(
-					&(xsk_tx->socket_info.tx), 1, &tx_idx);
-				if (k_instrument) {
-					hexdump(stderr, write_addr,
-						(write_len < 32) ? write_len :
-								   32);
-					fprintf(stderr,
-						"Write length %lu ret=%ld\n",
-						write_len, ret);
+					memcpy(tx_pkt, pkt, len) ; // Copy the packet from the receive buffer to the transmit buffer
+					struct ethhdr *tx_eth = (struct ethhdr *)tx_pkt;
+					ssize_t ret = xsk_ring_prod__reserve(
+						&(xsk_tx->socket_info.tx), 1, &tx_idx);
+					if (k_instrument) {
+						hexdump(stderr, write_addr,
+							(write_len < 32) ? write_len :
+									   32);
+						fprintf(stderr,
+							"Write length %lu ret=%ld\n",
+							write_len, ret);
+					}
+					if (ret != 1) {
+						/* No more transmit slots, drop the packet */
+						return false;
+					}
+
+					/* Swap in the revised mac addresses */
+					if (k_instrument) {
+						fprintf(stderr,
+							"Swapping source mac from ");
+						show_mac(eth->h_source);
+						fprintf(stderr, " to ");
+						show_mac(xsk_tx->src_mac);
+						fprintf(stderr, " and dst mac from ");
+						show_mac(eth->h_dest);
+						fprintf(stderr, " to ");
+						show_mac(xsk_tx->dst_mac);
+						fprintf(stderr, "\n");
+					}
+					memcpy(tx_eth->h_source, xsk_tx->src_mac,
+						   ETH_ALEN);
+					memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
+
+					xsk_ring_prod__tx_desc(
+						&(xsk_tx->socket_info.tx), tx_idx)
+						->addr = tx_addr;
+					xsk_ring_prod__tx_desc(
+						&(xsk_tx->socket_info.tx), tx_idx)
+						->len = len;
+					xsk_ring_prod__submit(&(xsk_tx->socket_info.tx),
+								  1);
+					xsk_tx->outstanding_tx++;
+
+					stats->stats.tx_bytes += len;
+					stats->stats.tx_packets += 1;
+					return false; // Not using the rx umem for transmission
 				}
-				if (ret != 1) {
-					/* No more transmit slots, drop the packet */
-					return false;
-				}
-
-				/* Swap in the revised mac addresses */
-				if (k_instrument) {
-					fprintf(stderr,
-						"Swapping source mac from ");
-					show_mac(eth->h_source);
-					fprintf(stderr, " to ");
-					show_mac(xsk_tx->src_mac);
-					fprintf(stderr, " and dst mac from ");
-					show_mac(eth->h_dest);
-					fprintf(stderr, " to ");
-					show_mac(xsk_tx->dst_mac);
-					fprintf(stderr, "\n");
-				}
-				memcpy(tx_eth->h_source, xsk_tx->src_mac,
-				       ETH_ALEN);
-				memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
-
-				xsk_ring_prod__tx_desc(
-					&(xsk_tx->socket_info.tx), tx_idx)
-					->addr = tx_addr;
-				xsk_ring_prod__tx_desc(
-					&(xsk_tx->socket_info.tx), tx_idx)
-					->len = len;
-				xsk_ring_prod__submit(&(xsk_tx->socket_info.tx),
-						      1);
-				xsk_tx->outstanding_tx++;
-
-				stats->stats.tx_bytes += len;
-				stats->stats.tx_packets += 1;
-				return false; // Not using the rx umem for transmission
 			}
 
 		} else {
@@ -728,6 +735,53 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 	if (k_instrument) {
 		fprintf(stderr, "complete_tx exit, outstanding_tx=%d\n",
 			xsk_tx->outstanding_tx);
+	}
+}
+
+static void complete_tx_on_rx(struct xsk_socket_info *xsk_src)
+{
+	unsigned int completed;
+	uint32_t idx_cq;
+	if (k_instrument) {
+		fprintf(stderr, "complete_tx_on_rx entry, outstanding_tx=%d\n",
+				xsk_src->outstanding_tx);
+	}
+	if (!xsk_src->outstanding_tx)
+		return;
+
+	sendto(xsk_socket__fd(xsk_src->xsk), NULL, 0, MSG_DONTWAIT,
+	       NULL, 0);
+
+	/* Collect/free completed TX buffers */
+	completed = xsk_ring_cons__peek(&xsk_src->cq,
+					XSK_RING_CONS__DEFAULT_NUM_DESCS,
+					&idx_cq);
+
+	if (k_instrument) {
+		fprintf(stderr, "complete_tx_on_rx completed=%u\n", completed);
+	}
+
+	if (completed > 0) {
+		for (int i = 0; i < completed; i++) {
+			if (k_instrument) {
+				fprintf(stderr,
+					"calling umem_free_umem_frame i=%d\n",
+					i);
+			}
+			umem_free_umem_frame(&xsk_src->umem,
+					     *xsk_ring_cons__comp_addr(
+						     &xsk_src->cq,
+						     idx_cq++));
+		}
+
+		xsk_ring_cons__release(&xsk_src->cq, completed);
+		xsk_src->outstanding_tx -= completed < xsk_src->outstanding_tx ?
+						  completed :
+						  xsk_src->outstanding_tx;
+	}
+	if (k_instrument) {
+		fprintf(stderr, "complete_tx_on_rx exit, outstanding_tx=%d\n",
+			xsk_src->outstanding_tx);
 	}
 }
 
@@ -790,7 +844,10 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 	stats->stats.rx_batch_count += 1;
 	xsk_ring_cons__release(&xsk_src->rx, rcvd);
 	/* Do we need to wake up the kernel for transmission */
-	complete_tx(xsk_tx);
+	if( k_transmit_to_receiver)
+		complete_tx_on_rx(xsk_src);
+	else
+		complete_tx(xsk_tx);
 }
 
 static void rx_and_process(struct config *cfg,
@@ -1209,16 +1266,20 @@ int main(int argc, char **argv)
 					rc, errno);
 			}
 		}
-		tx_socket_info = xsk_configure_socket_tx(&cfg);
-		if (tx_socket_info == NULL) {
-			fprintf(stderr,
-				"ERROR: Failed calling xsk_configure_socket_tx "
-				"\"%s\"\n",
-				strerror(errno));
-			exit(EXIT_FAILURE);
+		if ( k_transmit_to_receiver) {
+			tx_socket_info = NULL ;
+		} else {
+			tx_socket_info = xsk_configure_socket_tx(&cfg);
+			if (tx_socket_info == NULL) {
+				fprintf(stderr,
+					"ERROR: Failed calling xsk_configure_socket_tx "
+					"\"%s\"\n",
+					strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+			set_mac(tx_socket_info->src_mac, getenv("SRC_MAC"));
+			set_mac(tx_socket_info->dst_mac, getenv("DST_MAC"));
 		}
-		set_mac(tx_socket_info->src_mac, getenv("SRC_MAC"));
-		set_mac(tx_socket_info->dst_mac, getenv("DST_MAC"));
 	}
 
 	accept_map_fd = open_bpf_map_file(pin_basedir, "accept_map", &info);
