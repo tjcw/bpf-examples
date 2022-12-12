@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 	gettimeofday(&start,NULL) ;
 	for(int j=0; j<repcount; j += 1) {
 		struct sockaddr_in cliaddr ;
-	    int len = sizeof(cliaddr);  //len is value/result
+	    unsigned int len = sizeof(cliaddr);  //len is value/result
 
 	    int n = recvfrom(sfd, (char *)buf, BUF_SIZE,
 	                MSG_WAITALL, ( struct sockaddr *) &cliaddr,
@@ -58,7 +58,6 @@ int main(int argc, char *argv[])
 	}
 	gettimeofday(&end, NULL);
 	double duration=(end.tv_sec-start.tv_sec) + (end.tv_usec-start.tv_usec)*1e-6;
-	unsigned long bytes=(unsigned long)BUF_SIZE*repcount;
 	double bitrate=(bytes*8)/duration;
 	printf("%lu bytes in %f seconds, rate=%f Gbit/sec\n", bytes, duration, bitrate*1e-9);
 
