@@ -427,7 +427,7 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 	xsk_cfg.xdp_flags = cfg->xdp_flags;
 	xsk_cfg.bind_flags = cfg->xsk_bind_flags;
 	xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
-	ret = xsk_socket__create_shared(&tx_info->socket_info.xsk, cfg->redirect_ifname, 0,
+	ret = xsk_socket__create_shared(&tx_info->socket_info.xsk, cfg->redirect_ifname, 1,
 			tx_info->socket_info.umem.umem, &tx_info->socket_info.rx,
 			&tx_info->socket_info.tx, &tx_info->socket_info.fq,
 					&tx_info->socket_info.cq, &xsk_cfg);
