@@ -40,7 +40,7 @@
 
 #include <sys/time.h>
 
-#include <sys/syscall.h>      /* Definition of SYS_* constants */
+#include <sys/syscall.h> /* Definition of SYS_* constants */
 #include <sched.h>
 
 #include "common_params.h"
@@ -133,15 +133,13 @@ static void exit_application(int sig)
 int main(int argc, char **argv)
 {
 	struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
-	struct config cfg = {
-		.ifindex = -1,
-		.redirect_ifindex = -1,
-		.xsk_if_queue = 1,
-		.do_unload = false,
-		.filename = "",
-		.progsec = "xdp_sock_0",
-		.redirect_ifname_pid = -1
-	};
+	struct config cfg = { .ifindex = -1,
+			      .redirect_ifindex = -1,
+			      .xsk_if_queue = 1,
+			      .do_unload = false,
+			      .filename = "",
+			      .progsec = "xdp_sock_0",
+			      .redirect_ifname_pid = -1 };
 	struct xdp_program *xdp_prog;
 	struct bpf_object *bpf_object = NULL;
 	int err;
@@ -159,7 +157,7 @@ int main(int argc, char **argv)
 		return EXIT_FAIL_OPTION;
 	}
 
-//	struct bpf_map *xsks_map;
+	//	struct bpf_map *xsks_map;
 	/* Load custom program if configured */
 	fprintf(stderr, "main cfg.filename=%s\n", cfg.filename);
 	if (cfg.filename[0] == 0) {
@@ -180,19 +178,19 @@ int main(int argc, char **argv)
 		fprintf(stderr, "ERROR:xdp_program__bpf_obj returns NULL\n");
 		exit(EXIT_FAILURE);
 	}
-//	xsks_map = bpf_object__find_map_by_name(bpf_object, "xsks_map");
-//	if (xsks_map == NULL) {
-//		fprintf(stderr,
-//			"ERROR:bpf_object__find_map_by_name returns NULL\n");
-//		exit(EXIT_FAILURE);
-//	}
-//	err = bpf_map__set_max_entries(xsks_map, cfg.xsk_if_queue);
-//	if (err != 0) {
-//		fprintf(stderr,
-//			"ERROR:bpf_map__set_max_entries returns %d %s\n", err,
-//			strerror(err));
-//		exit(EXIT_FAILURE);
-//	}
+	//	xsks_map = bpf_object__find_map_by_name(bpf_object, "xsks_map");
+	//	if (xsks_map == NULL) {
+	//		fprintf(stderr,
+	//			"ERROR:bpf_object__find_map_by_name returns NULL\n");
+	//		exit(EXIT_FAILURE);
+	//	}
+	//	err = bpf_map__set_max_entries(xsks_map, cfg.xsk_if_queue);
+	//	if (err != 0) {
+	//		fprintf(stderr,
+	//			"ERROR:bpf_map__set_max_entries returns %d %s\n", err,
+	//			strerror(err));
+	//		exit(EXIT_FAILURE);
+	//	}
 	/* Allow unlimited locking of memory, so all memory needed for packet
 	 * buffers can be locked.
 	 */
@@ -208,8 +206,8 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	while ( ! global_exit )
-		sleep(3600) ;
+	while (!global_exit)
+		sleep(3600);
 
 	xdp_program__detach(xdp_prog, cfg.ifindex, XDP_MODE_SKB, 0);
 	xdp_program__close(xdp_prog);

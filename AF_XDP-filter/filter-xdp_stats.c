@@ -26,9 +26,7 @@ static const char *__doc__ = "XDP stats program\n"
 
 #include "bpf_util.h" /* bpf_num_possible_cpus */
 
-enum {
-	k_trace = false
-};
+enum { k_trace = false };
 
 static const struct option_wrapper long_options[] = {
 	{ { "help", no_argument, NULL, 'h' }, "Show help", false },
@@ -159,14 +157,15 @@ static void stats_print(struct stats_record *stats_rec,
 		       rec->total.rx_bytes / 1000, bps, period);
 	}
 	printf("\n");
-	fflush(stdout) ;
+	fflush(stdout);
 }
 
 /* BPF_MAP_TYPE_ARRAY */
 void map_get_value_array(int fd, __u32 key, struct datarec *value)
 {
 	if (k_trace)
-		fprintf(stderr, "map_get_value_array fd=%i key=0x%08x\n", fd, key) ;
+		fprintf(stderr, "map_get_value_array fd=%i key=0x%08x\n", fd,
+			key);
 	if ((bpf_map_lookup_elem(fd, &key, value)) != 0) {
 		fprintf(stderr, "ERR: bpf_map_lookup_elem failed key:0x%X\n",
 			key);
@@ -184,8 +183,9 @@ void map_get_value_percpu_array(int fd, __u32 key, struct datarec *value)
 	int i;
 
 	if (k_trace)
-		fprintf(stderr, "map_get_value_percpu_array fd=%i key=0x%08x nr_cpus=%d\n",
-				fd, key, nr_cpus) ;
+		fprintf(stderr,
+			"map_get_value_percpu_array fd=%i key=0x%08x nr_cpus=%d\n",
+			fd, key, nr_cpus);
 	if ((bpf_map_lookup_elem(fd, &key, values)) != 0) {
 		fprintf(stderr, "ERR: bpf_map_lookup_elem failed key:0x%X\n",
 			key);
@@ -196,9 +196,10 @@ void map_get_value_percpu_array(int fd, __u32 key, struct datarec *value)
 	for (i = 0; i < nr_cpus; i++) {
 		sum_pkts += values[i].rx_packets;
 		sum_bytes += values[i].rx_bytes;
-		if(k_trace)
-			fprintf(stderr, "values[%d].rx_packets=%llu .rx_bytes=%llu\n",
-					i,values[i].rx_packets, values[i].rx_bytes) ;
+		if (k_trace)
+			fprintf(stderr,
+				"values[%d].rx_packets=%llu .rx_bytes=%llu\n",
+				i, values[i].rx_packets, values[i].rx_bytes);
 	}
 	value->rx_packets = sum_pkts;
 	value->rx_bytes = sum_bytes;
@@ -262,7 +263,7 @@ static int stats_poll(const char *pin_dir, int map_fd, __u32 id, __u32 map_type,
 			return EXIT_FAIL_BPF;
 		} else if (id != info.id) {
 			printf("BPF map xdp_stats_map changed its ID, restarting\n");
-			fflush(stdout) ;
+			fflush(stdout);
 			close(map_fd);
 			return 0;
 		}
@@ -318,7 +319,7 @@ int main(int argc, char **argv)
 			       " key_size:%d value_size:%d max_entries:%d\n",
 			       info.type, info.id, info.name, info.key_size,
 			       info.value_size, info.max_entries);
-			fflush(stdout) ;
+			fflush(stdout);
 		}
 
 		err = stats_poll(pin_basedir, stats_map_fd, info.id, info.type,
