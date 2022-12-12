@@ -626,7 +626,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
 				uint64_t tx_addr=umem_alloc_umem_frame(&xsk_tx->socket_info.umem);
-				uint8_t *tx_pkt = xsk_umem__get_data(xsk_tx->socket_info.umem, tx_addr);
+				uint8_t *tx_pkt = xsk_umem__get_data(xsk_tx->socket_info.umem.buffer, tx_addr);
 
 				memcpy(tx_pkt, pkt, len) ; // Copy the packet from the receive buffer to the transmit buffer
 				struct ethhdr *tx_eth = (struct ethhdr *)tx_pkt;
