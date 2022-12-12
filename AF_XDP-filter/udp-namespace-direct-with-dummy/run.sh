@@ -1,18 +1,10 @@
 #!/bin/bash -x
 # SPDX-License-Identifier: GPL-2.0
-# Run script for ping functional between namespaces
+# Run script for UDP functional test between namespaces
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 # Set TCPDUMP env var non-null if you want take tcpdumps of packets on the interfaces
 ulimit -c unlimited
-ip link delete veth1
-ip link delete veth2
-
-ip netns delete ns1
-ip netns delete ns2
-
-rm -f vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
-sleep 2
 
 ip netns add ns1
 ip netns add ns2
