@@ -63,11 +63,10 @@ struct {
 	__uint(pinning, LIBBPF_PIN_BY_NAME);
 } xdp_stats_map SEC(".maps");
 
-
 SEC("xdp")
 int xsk_my_prog(struct xdp_md *ctx)
 {
-	return XDP_PASS ;
+	return XDP_PASS;
 }
 
 char _license[] SEC("license") = "GPL";

@@ -40,7 +40,7 @@
 
 #include <sys/time.h>
 
-#include <sys/syscall.h>      /* Definition of SYS_* constants */
+#include <sys/syscall.h> /* Definition of SYS_* constants */
 #include <sched.h>
 
 #include "common_params.h"
@@ -228,15 +228,10 @@ static void hexdump(FILE *out, const void *data, unsigned long length)
 		hexdump1(out, cdata, (fullcount * k_bytesperline), tailcount);
 	fprintf(out, "\n");
 }
-static void show_mac(unsigned char macaddr[ETH_ALEN]) {
-	fprintf(stderr, "%02x:%02x:%02x:%02x:%02x:%02x",
-			macaddr[0],
-			macaddr[1],
-			macaddr[2],
-			macaddr[3],
-			macaddr[4],
-			macaddr[5]
-			) ;
+static void show_mac(unsigned char macaddr[ETH_ALEN])
+{
+	fprintf(stderr, "%02x:%02x:%02x:%02x:%02x:%02x", macaddr[0], macaddr[1],
+		macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
 }
 
 static bool global_exit;
@@ -403,7 +398,8 @@ static struct all_socket_info *xsk_configure_socket_all(struct config *cfg,
 
 static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 {
-	struct tx_socket_info *tx_info = calloc(1, sizeof(struct tx_socket_info)) ;
+	struct tx_socket_info *tx_info =
+		calloc(1, sizeof(struct tx_socket_info));
 	tx_info->outstanding_tx = 0;
 
 	struct xsk_socket_config xsk_cfg;
@@ -419,18 +415,20 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 			strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	configure_xsk_umem(&(tx_info->socket_info.umem), packet_buffer, packet_buffer_size,
-			   &(tx_info->socket_info.fq), &(tx_info->socket_info.cq));
+	configure_xsk_umem(&(tx_info->socket_info.umem), packet_buffer,
+			   packet_buffer_size, &(tx_info->socket_info.fq),
+			   &(tx_info->socket_info.cq));
 	xsk_cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
 	xsk_cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
 	xsk_cfg.libbpf_flags = 0;
 	xsk_cfg.xdp_flags = cfg->xdp_flags;
 	xsk_cfg.bind_flags = cfg->xsk_bind_flags;
 	xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
-	ret = xsk_socket__create_shared(&tx_info->socket_info.xsk, cfg->redirect_ifname, 0,
-			tx_info->socket_info.umem.umem, &tx_info->socket_info.rx,
-			&tx_info->socket_info.tx, &tx_info->socket_info.fq,
-					&tx_info->socket_info.cq, &xsk_cfg);
+	ret = xsk_socket__create_shared(
+		&tx_info->socket_info.xsk, cfg->redirect_ifname, 0,
+		tx_info->socket_info.umem.umem, &tx_info->socket_info.rx,
+		&tx_info->socket_info.tx, &tx_info->socket_info.fq,
+		&tx_info->socket_info.cq, &xsk_cfg);
 
 	printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
 	if (ret)
@@ -450,7 +448,8 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 		*xsk_ring_prod__fill_addr(&tx_info->socket_info.fq, idx++) =
 			umem_alloc_umem_frame(&tx_info->socket_info.umem);
 
-	xsk_ring_prod__submit(&tx_info->socket_info.fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
+	xsk_ring_prod__submit(&tx_info->socket_info.fq,
+			      XSK_RING_PROD__DEFAULT_NUM_DESCS);
 
 	return tx_info;
 
@@ -542,8 +541,8 @@ static bool filter_pass_icmp(int accept_map_fd, __u32 saddr, __u32 daddr,
 		fprintf(stderr, "bpf_map_update_elem returns %d\n", ret);
 	return true;
 }
-static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_info *xsk_tx,
-               uint64_t addr,
+static bool process_packet(struct xsk_socket_info *xsk_src,
+			   struct tx_socket_info *xsk_tx, uint64_t addr,
 			   uint32_t len, struct socket_stats *stats, int tun_fd,
 			   int accept_map_fd)
 {
@@ -561,11 +560,12 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 		if (k_showpacket)
 			hexdump(stderr, ip, (len < 32) ? len : 32);
 		if (k_timestamp) {
-			struct timeval tv ;
-			gettimeofday(&tv, NULL) ;
-			double elapsed=(tv.tv_sec-stats->start_time.tv_sec)
-					+ 1e-6*(tv.tv_usec-stats->start_time.tv_usec) ;
-			fprintf(stderr, "timestamp %15.6f\n", elapsed) ;
+			struct timeval tv;
+			gettimeofday(&tv, NULL);
+			double elapsed =
+				(tv.tv_sec - stats->start_time.tv_sec) +
+				1e-6 * (tv.tv_usec - stats->start_time.tv_usec);
+			fprintf(stderr, "timestamp %15.6f\n", elapsed);
 		}
 		if (k_instrument)
 			fprintf(stderr,
@@ -602,19 +602,22 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 			stats->stats.filter_passes[protocol] += 1;
 			uint8_t *write_addr = (uint8_t *)ip;
 			size_t write_len = len - sizeof(struct ethhdr);
-			if ( tun_fd != -1)
-			{
-				ssize_t ret = write(tun_fd, write_addr, write_len);
+			if (tun_fd != -1) {
+				ssize_t ret =
+					write(tun_fd, write_addr, write_len);
 				if (k_instrument) {
 					hexdump(stderr, write_addr,
-						(write_len < 32) ? write_len : 32);
-					fprintf(stderr, "Write length %lu actual %ld\n",
-							write_len, ret);
+						(write_len < 32) ? write_len :
+								   32);
+					fprintf(stderr,
+						"Write length %lu actual %ld\n",
+						write_len, ret);
 				}
 				if (ret != write_len) {
 					fprintf(stderr,
 						"Error. %lu bytes requested, %ld bytes delivered, errno=%d %s\n",
-						write_len, ret, errno, strerror(errno));
+						write_len, ret, errno,
+						strerror(errno));
 					exit(EXIT_FAILURE);
 				}
 			} else {
@@ -623,12 +626,15 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
 
-				ssize_t ret = xsk_ring_prod__reserve(&(xsk_tx->socket_info.tx), 1, &tx_idx);
+				ssize_t ret = xsk_ring_prod__reserve(
+					&(xsk_tx->socket_info.tx), 1, &tx_idx);
 				if (k_instrument) {
 					hexdump(stderr, write_addr,
-						(write_len < 32) ? write_len : 32);
-					fprintf(stderr, "Write length %lu ret=%ld\n",
-							write_len, ret);
+						(write_len < 32) ? write_len :
+								   32);
+					fprintf(stderr,
+						"Write length %lu ret=%ld\n",
+						write_len, ret);
 				}
 				if (ret != 1) {
 					/* No more transmit slots, drop the packet */
@@ -636,24 +642,30 @@ static bool process_packet(struct xsk_socket_info *xsk_src, struct tx_socket_inf
 				}
 
 				/* Swap in the revised mac addresses */
-				if ( k_instrument ) {
-					fprintf(stderr,"Swapping source mac from " ) ;
-					show_mac(eth->h_source) ;
-					fprintf(stderr," to ") ;
-					show_mac(xsk_tx->src_mac) ;
-					fprintf(stderr," and dst mac from " ) ;
-					show_mac(eth->h_dest) ;
-					fprintf(stderr," to ") ;
-					show_mac(xsk_tx->dst_mac) ;
-					fprintf(stderr, "\n") ;
-
+				if (k_instrument) {
+					fprintf(stderr,
+						"Swapping source mac from ");
+					show_mac(eth->h_source);
+					fprintf(stderr, " to ");
+					show_mac(xsk_tx->src_mac);
+					fprintf(stderr, " and dst mac from ");
+					show_mac(eth->h_dest);
+					fprintf(stderr, " to ");
+					show_mac(xsk_tx->dst_mac);
+					fprintf(stderr, "\n");
 				}
-				memcpy(eth->h_source, xsk_tx->src_mac, ETH_ALEN) ;
-				memcpy(eth->h_dest, xsk_tx->dst_mac, ETH_ALEN) ;
+				memcpy(eth->h_source, xsk_tx->src_mac,
+				       ETH_ALEN);
+				memcpy(eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
 
-				xsk_ring_prod__tx_desc(&(xsk_tx->socket_info.tx), tx_idx)->addr = addr;
-				xsk_ring_prod__tx_desc(&(xsk_tx->socket_info.tx), tx_idx)->len = len;
-				xsk_ring_prod__submit(&(xsk_tx->socket_info.tx), 1);
+				xsk_ring_prod__tx_desc(
+					&(xsk_tx->socket_info.tx), tx_idx)
+					->addr = addr;
+				xsk_ring_prod__tx_desc(
+					&(xsk_tx->socket_info.tx), tx_idx)
+					->len = len;
+				xsk_ring_prod__submit(&(xsk_tx->socket_info.tx),
+						      1);
 				xsk_tx->outstanding_tx++;
 
 				stats->stats.tx_bytes += len;
@@ -673,13 +685,14 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 	unsigned int completed;
 	uint32_t idx_cq;
 	if (k_instrument) {
-		fprintf(stderr, "complete_tx entry, outstanding_tx=%d\n", xsk_tx->outstanding_tx) ;
+		fprintf(stderr, "complete_tx entry, outstanding_tx=%d\n",
+			xsk_tx->outstanding_tx);
 	}
 	if (!xsk_tx->outstanding_tx)
 		return;
 
-	sendto(xsk_socket__fd(xsk_tx->socket_info.xsk), NULL, 0, MSG_DONTWAIT, NULL, 0);
-
+	sendto(xsk_socket__fd(xsk_tx->socket_info.xsk), NULL, 0, MSG_DONTWAIT,
+	       NULL, 0);
 
 	/* Collect/free completed TX buffers */
 	completed = xsk_ring_cons__peek(&xsk_tx->socket_info.cq,
@@ -687,30 +700,35 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 					&idx_cq);
 
 	if (k_instrument) {
-		fprintf(stderr, "complete_tx completed=%u\n", completed) ;
+		fprintf(stderr, "complete_tx completed=%u\n", completed);
 	}
 
 	if (completed > 0) {
 		for (int i = 0; i < completed; i++) {
 			if (k_instrument) {
-				fprintf(stderr, "calling umem_free_umem_frame i=%d\n",i) ;
+				fprintf(stderr,
+					"calling umem_free_umem_frame i=%d\n",
+					i);
 			}
 			umem_free_umem_frame(&xsk_tx->socket_info.umem,
-					    *xsk_ring_cons__comp_addr(&xsk_tx->socket_info.cq,
-								      idx_cq++));
+					     *xsk_ring_cons__comp_addr(
+						     &xsk_tx->socket_info.cq,
+						     idx_cq++));
 		}
 
 		xsk_ring_cons__release(&xsk_tx->socket_info.cq, completed);
 		xsk_tx->outstanding_tx -= completed < xsk_tx->outstanding_tx ?
-			completed : xsk_tx->outstanding_tx;
+						  completed :
+						  xsk_tx->outstanding_tx;
 	}
 	if (k_instrument) {
-		fprintf(stderr, "complete_tx exit, outstanding_tx=%d\n", xsk_tx->outstanding_tx) ;
+		fprintf(stderr, "complete_tx exit, outstanding_tx=%d\n",
+			xsk_tx->outstanding_tx);
 	}
 }
 
 static void handle_receive_packets(struct xsk_socket_info *xsk_src,
-		           struct tx_socket_info *xsk_tx,
+				   struct tx_socket_info *xsk_tx,
 				   struct socket_stats *stats, int tun_fd,
 				   int accept_map_fd)
 {
@@ -749,15 +767,15 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 		uint32_t len =
 			xsk_ring_cons__rx_desc(&xsk_src->rx, idx_rx++)->len;
 
-		bool transmitted = process_packet(xsk_src, xsk_tx, addr, len, stats,
-						  tun_fd, accept_map_fd);
+		bool transmitted = process_packet(xsk_src, xsk_tx, addr, len,
+						  stats, tun_fd, accept_map_fd);
 
 		if (k_instrument)
 			printf("addr=0x%lx len=%u transmitted=%u\n", addr, len,
 			       transmitted);
 		if (!transmitted) {
-			printf("addr=0x%lx len=%u transmitted=%u calling umem_free_umem_frame\n", addr, len,
-			       transmitted);
+			printf("addr=0x%lx len=%u transmitted=%u calling umem_free_umem_frame\n",
+			       addr, len, transmitted);
 			umem_free_umem_frame(&xsk_src->umem, addr);
 		}
 
@@ -789,18 +807,20 @@ static void rx_and_process(struct config *cfg,
 
 	while (!global_exit) {
 		ret = poll(fds, nfds, -1);
-		if( k_instrument )
-			fprintf(stderr, "rx_and_process poll returns %d\n", ret) ;
+		if (k_instrument)
+			fprintf(stderr, "rx_and_process poll returns %d\n",
+				ret);
 		if (ret <= 0 || ret > nfds)
 			continue;
 		for (int q = 0; q < nfds; q += 1) {
 			if (fds[q].revents & POLLIN) {
-				if( k_instrument )
-					fprintf(stderr, "rx_and_process q=%d\n", q) ;
+				if (k_instrument)
+					fprintf(stderr, "rx_and_process q=%d\n",
+						q);
 				handle_receive_packets(
 					all_socket_info->xsk_socket_info[q],
-					tx_socket_info,
-					stats, tun_fd, accept_map_fd);
+					tx_socket_info, stats, tun_fd,
+					accept_map_fd);
 			}
 		}
 	}
@@ -982,26 +1002,21 @@ static int open_bpf_map_file(const char *pin_dir, const char *mapname,
 
 static void set_mac(unsigned char macaddr[ETH_ALEN], const char *env)
 {
-	memset(macaddr, 0, ETH_ALEN) ;
-	if ( env != NULL) {
-		unsigned int mac0 , mac1, mac2, mac3, mac4, mac5 ;
-		sscanf(env, "%02x:%02x:%02x:%02x:%02x:%02x",
-				&mac0, &mac1, &mac2, &mac3, &mac4, &mac5) ;
-		macaddr[0] = mac0 ;
-		macaddr[1] = mac1 ;
-		macaddr[2] = mac2 ;
-		macaddr[3] = mac3 ;
-		macaddr[4] = mac4 ;
-		macaddr[5] = mac5 ;
-		if ( k_instrument ) {
+	memset(macaddr, 0, ETH_ALEN);
+	if (env != NULL) {
+		unsigned int mac0, mac1, mac2, mac3, mac4, mac5;
+		sscanf(env, "%02x:%02x:%02x:%02x:%02x:%02x", &mac0, &mac1,
+		       &mac2, &mac3, &mac4, &mac5);
+		macaddr[0] = mac0;
+		macaddr[1] = mac1;
+		macaddr[2] = mac2;
+		macaddr[3] = mac3;
+		macaddr[4] = mac4;
+		macaddr[5] = mac5;
+		if (k_instrument) {
 			fprintf(stderr, "mac=%02x:%02x:%02x:%02x:%02x:%02x\n",
-					macaddr[0],
-					macaddr[1],
-					macaddr[2],
-					macaddr[3],
-					macaddr[4],
-					macaddr[5]
-					) ;
+				macaddr[0], macaddr[1], macaddr[2], macaddr[3],
+				macaddr[4], macaddr[5]);
 		}
 	}
 }
@@ -1013,15 +1028,13 @@ int main(int argc, char **argv)
 {
 	int ret;
 	struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
-	struct config cfg = {
-		.ifindex = -1,
-		.redirect_ifindex = -1,
-		.xsk_if_queue = 1,
-		.do_unload = false,
-		.filename = "",
-		.progsec = "xdp_sock_0",
-		.redirect_ifname_pid = -1
-	};
+	struct config cfg = { .ifindex = -1,
+			      .redirect_ifindex = -1,
+			      .xsk_if_queue = 1,
+			      .do_unload = false,
+			      .filename = "",
+			      .progsec = "xdp_sock_0",
+			      .redirect_ifname_pid = -1 };
 	struct all_socket_info *all_socket_info;
 	struct xdp_program *xdp_prog;
 	struct bpf_object *bpf_object = NULL;
@@ -1034,7 +1047,7 @@ int main(int argc, char **argv)
 	int xsks_map_fd;
 
 	int accept_map_fd;
-	struct tx_socket_info *tx_socket_info ;
+	struct tx_socket_info *tx_socket_info;
 
 	memset(&stats, 0, sizeof(stats));
 
@@ -1126,23 +1139,23 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if ( cfg.redirect_ifname_pid == -1)
-	{
+	if (cfg.redirect_ifname_pid == -1) {
 		/* First frames to be handled by TUN */
 		/* Start TUN */
 		strcpy(tun_name, "tun0");
 		tun_fd = tun_alloc(tun_name);
 		if (tun_fd < 0) {
 			err = errno;
-			fprintf(stderr, "ERROR:tun_alloc gives errno=%d %s\n", err,
-				strerror(err));
+			fprintf(stderr, "ERROR:tun_alloc gives errno=%d %s\n",
+				err, strerror(err));
 			exit(EXIT_FAILURE);
 		}
-		fprintf(stderr, "tun_fd=%d\n", tun_fd) ;
+		fprintf(stderr, "tun_fd=%d\n", tun_fd);
 
 		if (k_receive_tuntap) {
 			// Start thread to read from the tun
-			ret = pthread_create(&tun_read_thread, NULL, tun_read, &tun_fd);
+			ret = pthread_create(&tun_read_thread, NULL, tun_read,
+					     &tun_fd);
 			if (ret) {
 				fprintf(stderr,
 					"ERROR: Failed creating tun_read thread "
@@ -1151,57 +1164,57 @@ int main(int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 		}
-		tx_socket_info = NULL ;
+		tx_socket_info = NULL;
 	} else {
 		/* First frames to be handled by AF_XDP send */
-		tun_fd=-1 ;
+		tun_fd = -1;
 		/* A pid of 1 would mean 'init', where the setns would be to the root namespace */
 		/* Interpret this as a dummy */
-		if ( cfg.redirect_ifname_pid != 1) {
-			int setns_fd = syscall(SYS_pidfd_open,cfg.redirect_ifname_pid, 0) ;
-			if (setns_fd == -1)
-			{
+		if (cfg.redirect_ifname_pid != 1) {
+			int setns_fd = syscall(SYS_pidfd_open,
+					       cfg.redirect_ifname_pid, 0);
+			if (setns_fd == -1) {
 				fprintf(stderr,
 					"ERROR: Failed calling pidfd_open) "
 					"\"%s\"\n",
 					strerror(errno));
 				exit(EXIT_FAILURE);
 			}
-			fprintf(stderr, "setns_fd=%d\n", setns_fd) ;
-			err=setns(setns_fd, CLONE_NEWNET) ;
-			if ( err == -1)
-			{
+			fprintf(stderr, "setns_fd=%d\n", setns_fd);
+			err = setns(setns_fd, CLONE_NEWNET);
+			if (err == -1) {
 				fprintf(stderr,
 					"ERROR: Failed calling setns) "
 					"\"%s\"\n",
 					strerror(errno));
 				exit(EXIT_FAILURE);
 			}
-			fprintf(stderr, "setns returns %d\n", err) ;
-			if ( k_diagnose_setns )
-			{
+			fprintf(stderr, "setns returns %d\n", err);
+			if (k_diagnose_setns) {
 				int rc;
-				fprintf(stderr, "pid=%d about to sleep(3600)\n", getpid() );
-				errno=0;
-				rc=sleep(3600) ;
-				fprintf(stderr, "sleep returns %d, errno=%d\n", rc, errno);
-				fprintf(stderr, "About to call /bin/bash\n") ;
-				errno=0;
-				rc=system("/bin/bash") ;
-				fprintf(stderr, "bash returns %d, errno=%d\n", rc, errno);
+				fprintf(stderr, "pid=%d about to sleep(3600)\n",
+					getpid());
+				errno = 0;
+				rc = sleep(3600);
+				fprintf(stderr, "sleep returns %d, errno=%d\n",
+					rc, errno);
+				fprintf(stderr, "About to call /bin/bash\n");
+				errno = 0;
+				rc = system("/bin/bash");
+				fprintf(stderr, "bash returns %d, errno=%d\n",
+					rc, errno);
 			}
 		}
-		tx_socket_info = xsk_configure_socket_tx(&cfg) ;
-		if ( tx_socket_info ==  NULL)
-		{
+		tx_socket_info = xsk_configure_socket_tx(&cfg);
+		if (tx_socket_info == NULL) {
 			fprintf(stderr,
 				"ERROR: Failed calling xsk_configure_socket_tx "
 				"\"%s\"\n",
 				strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		set_mac(tx_socket_info->src_mac, getenv("SRC_MAC")) ;
-		set_mac(tx_socket_info->dst_mac, getenv("DST_MAC")) ;
+		set_mac(tx_socket_info->src_mac, getenv("SRC_MAC"));
+		set_mac(tx_socket_info->dst_mac, getenv("DST_MAC"));
 	}
 
 	accept_map_fd = open_bpf_map_file(pin_basedir, "accept_map", &info);
@@ -1217,11 +1230,12 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	/* Receive and count packets than drop them */
-	gettimeofday(&(stats.start_time), NULL) ;
-	rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd, accept_map_fd);
+	gettimeofday(&(stats.start_time), NULL);
+	rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
+		       accept_map_fd);
 
 	/* Cleanup */
-	if ( tun_fd != -1)
+	if (tun_fd != -1)
 		close(tun_fd);
 	for (int q = 0; q < cfg.xsk_if_queue; q += 1) {
 		xsk_socket__delete(all_socket_info->xsk_socket_info[q]->xsk);

@@ -23,10 +23,8 @@
 #define XDP_ACTION_MAX (XDP_REDIRECT + 1)
 #endif
 
-
 SEC("xdp")
 int xsk_my_prog(struct xdp_md *ctx)
 {
-	return XDP_PASS ;
+	return XDP_PASS;
 }
-

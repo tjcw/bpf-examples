@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	struct addrinfo *result, *rp;
 	int sfd, s, j;
 	char buf[BUF_SIZE];
-	struct timeval start, end ;
+	struct timeval start, end;
 	unsigned int repcount;
 
 	if (argc < 3) {
@@ -30,10 +30,10 @@ int main(int argc, char *argv[])
 	/* Obtain address(es) matching host/port */
 
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+	hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
 	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
 	hints.ai_flags = 0;
-	hints.ai_protocol = 0;          /* Any protocol */
+	hints.ai_protocol = 0; /* Any protocol */
 
 	s = getaddrinfo(argv[1], argv[2], &hints, &result);
 	if (s != 0) {
@@ -52,33 +52,34 @@ int main(int argc, char *argv[])
 			continue;
 
 		if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
-			break;                  /* Success */
+			break; /* Success */
 
 		close(sfd);
 	}
 
-	if (rp == NULL) {               /* No address succeeded */
+	if (rp == NULL) { /* No address succeeded */
 		fprintf(stderr, "Could not connect\n");
 		exit(EXIT_FAILURE);
 	}
 
-	freeaddrinfo(result);           /* No longer needed */
+	freeaddrinfo(result); /* No longer needed */
 
-	repcount=atoi(argv[3]);
-	memset(buf,0,BUF_SIZE) ;
-	gettimeofday(&start,NULL) ;
-	for(j=0; j<repcount; j += 1) {
-		buf[0]=j & 0xff;
-	    int rc=write(sfd, buf, BUF_SIZE) ;
-	    assert(rc == BUF_SIZE) ;
-	    sleep(1) ;
+	repcount = atoi(argv[3]);
+	memset(buf, 0, BUF_SIZE);
+	gettimeofday(&start, NULL);
+	for (j = 0; j < repcount; j += 1) {
+		buf[0] = j & 0xff;
+		int rc = write(sfd, buf, BUF_SIZE);
+		assert(rc == BUF_SIZE);
+		sleep(1);
 	}
 	gettimeofday(&end, NULL);
-	double duration=(end.tv_sec-start.tv_sec) + (end.tv_usec-start.tv_usec)*1e-6;
-	unsigned long bytes=(unsigned long)BUF_SIZE*repcount;
-	double bitrate=(bytes*8)/duration;
-	printf("%lu bytes in %f seconds, rate=%f Gbit/sec\n", bytes, duration, bitrate*1e-9);
+	double duration = (end.tv_sec - start.tv_sec) +
+			  (end.tv_usec - start.tv_usec) * 1e-6;
+	unsigned long bytes = (unsigned long)BUF_SIZE * repcount;
+	double bitrate = (bytes * 8) / duration;
+	printf("%lu bytes in %f seconds, rate=%f Gbit/sec\n", bytes, duration,
+	       bitrate * 1e-9);
 
-	close(sfd) ;
-
+	close(sfd);
 }
