@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	char buf[BUF_SIZE];
 	struct timeval start, end ;
 	unsigned int repcount;
-	unsigned long bytes ;
+	unsigned long bytes=0 ;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s port repcount\n", argv[0]);
