@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
 		buf[0]=j & 0xff;
 	    int rc=write(sfd, buf, BUF_SIZE) ;
 	    assert(rc == BUF_SIZE) ;
+	    sleep(1) ;
 	}
 	gettimeofday(&end, NULL);
 	double duration=(end.tv_sec-start.tv_sec) + (end.tv_usec-start.tv_usec)*1e-6;
