@@ -434,22 +434,22 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg)
 	if (ret)
 		goto error_exit;
 
-	/* Stuff the receive path with buffers, we assume we have enough */
-	__u32 idx;
-	ret = xsk_ring_prod__reserve(&tx_info->socket_info.fq,
-				     XSK_RING_PROD__DEFAULT_NUM_DESCS, &idx);
-
-	printf("xsk_ring_prod__reserve returns %d, XSK_RING_PROD__DEFAULT_NUM_DESCS is %d\n",
-	       ret, XSK_RING_PROD__DEFAULT_NUM_DESCS);
-	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS)
-		goto error_exit;
-
-	for (int i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS; i++)
-		*xsk_ring_prod__fill_addr(&tx_info->socket_info.fq, idx++) =
-			umem_alloc_umem_frame(&tx_info->socket_info.umem);
-
-	xsk_ring_prod__submit(&tx_info->socket_info.fq,
-			      XSK_RING_PROD__DEFAULT_NUM_DESCS);
+//	/* Stuff the receive path with buffers, we assume we have enough */
+//	__u32 idx;
+//	ret = xsk_ring_prod__reserve(&tx_info->socket_info.fq,
+//				     XSK_RING_PROD__DEFAULT_NUM_DESCS, &idx);
+//
+//	printf("xsk_ring_prod__reserve returns %d, XSK_RING_PROD__DEFAULT_NUM_DESCS is %d\n",
+//	       ret, XSK_RING_PROD__DEFAULT_NUM_DESCS);
+//	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS)
+//		goto error_exit;
+//
+//	for (int i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS; i++)
+//		*xsk_ring_prod__fill_addr(&tx_info->socket_info.fq, idx++) =
+//			umem_alloc_umem_frame(&tx_info->socket_info.umem);
+//
+//	xsk_ring_prod__submit(&tx_info->socket_info.fq,
+//			      XSK_RING_PROD__DEFAULT_NUM_DESCS);
 
 	return tx_info;
 
@@ -625,7 +625,11 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				/* Here we sent the packet out of the receive port. Note that
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
+				uint64_t tx_addr=umem_alloc_umem_frame(&xsk_tx->socket_info.umem);
+				uint8_t *tx_pkt = xsk_umem__get_data(xsk_tx->socket_info.umem, tx_addr);
 
+				memcpy(tx_pkt, pkt, len) ; // Copy the packet from the receive buffer to the transmit buffer
+				struct ethhdr *tx_eth = (struct ethhdr *)tx_pkt;
 				ssize_t ret = xsk_ring_prod__reserve(
 					&(xsk_tx->socket_info.tx), 1, &tx_idx);
 				if (k_instrument) {
@@ -654,13 +658,13 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					show_mac(xsk_tx->dst_mac);
 					fprintf(stderr, "\n");
 				}
-				memcpy(eth->h_source, xsk_tx->src_mac,
+				memcpy(tx_eth->h_source, xsk_tx->src_mac,
 				       ETH_ALEN);
-				memcpy(eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
+				memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
 
 				xsk_ring_prod__tx_desc(
 					&(xsk_tx->socket_info.tx), tx_idx)
-					->addr = addr;
+					->addr = tx_addr;
 				xsk_ring_prod__tx_desc(
 					&(xsk_tx->socket_info.tx), tx_idx)
 					->len = len;
@@ -670,7 +674,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 
 				stats->stats.tx_bytes += len;
 				stats->stats.tx_packets += 1;
-				return true;
+				return false; // Not using the rx umem for transmission
 			}
 
 		} else {
