@@ -68,9 +68,9 @@ int main(int argc, char *argv[])
 	memset(buf,0,BUF_SIZE) ;
 	gettimeofday(&start,NULL) ;
 	for(j=0; j<repcount; j += 1) {
-		buf[0]=j & 0xff;
-	    int rc=write(sfd, buf, BUF_SIZE) ;
+	    int rc=read(sfd, buf, BUF_SIZE) ;
 	    assert(rc == BUF_SIZE) ;
+	    printf("buf[0] is %d\n", buf[0]) ;
 	}
 	gettimeofday(&end, NULL);
 	double duration=(end.tv_sec-start.tv_sec) + (end.tv_usec-start.tv_usec)*1e-6;
