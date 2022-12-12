@@ -11,67 +11,50 @@
 #include <sys/time.h>
 #include <assert.h>
 
-#define BUF_SIZE 1
+#define BUF_SIZE 4096
 
 int main(int argc, char *argv[])
 {
-	struct addrinfo hints;
-	struct addrinfo *result, *rp;
-	int sfd, s, j;
 	char buf[BUF_SIZE];
 	struct timeval start, end ;
 	unsigned int repcount;
+	unsigned long bytes ;
 
-	if (argc < 3) {
-		fprintf(stderr, "Usage: %s host port repcount\n", argv[0]);
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s port repcount\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
 	/* Obtain address(es) matching host/port */
 
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-	hints.ai_flags = 0;
-	hints.ai_protocol = 0;          /* Any protocol */
+	int sfd = socket(AF_INET, SOCK_DGRAM, 0) ;
+	struct sockaddr_in servaddr ;
 
-	s = getaddrinfo(argv[1], argv[2], &hints, &result);
-	if (s != 0) {
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-		exit(EXIT_FAILURE);
-	}
+    // Filling server information
+    servaddr.sin_family    = AF_INET; // IPv4
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(atoi(argv[1]));
 
-	/* getaddrinfo() returns a list of address structures.
-	Try each address until we successfully connect(2).
-	If socket(2) (or connect(2)) fails, we (close the socket
-	and) try the next address. */
-
-	for (rp = result; rp != NULL; rp = rp->ai_next) {
-		sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-		if (sfd == -1)
-			continue;
-
-		if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
-			break;                  /* Success */
-
-		close(sfd);
-	}
-
-	if (rp == NULL) {               /* No address succeeded */
-		fprintf(stderr, "Could not connect\n");
-		exit(EXIT_FAILURE);
-	}
-
-	freeaddrinfo(result);           /* No longer needed */
-
-	repcount=atoi(argv[3]);
+    // Bind the socket with the server address
+    if ( bind(sfd, (const struct sockaddr *)&servaddr,
+            sizeof(servaddr)) < 0 )
+    {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+	repcount=atoi(argv[2]);
 	memset(buf,0,BUF_SIZE) ;
 	gettimeofday(&start,NULL) ;
-	for(j=0; j<repcount; j += 1) {
-	    int rc=read(sfd, buf, BUF_SIZE) ;
-	    assert(rc == BUF_SIZE) ;
+	for(int j=0; j<repcount; j += 1) {
+		struct sockaddr_in cliaddr ;
+	    int len = sizeof(cliaddr);  //len is value/result
+
+	    int n = recvfrom(sfd, (char *)buf, BUF_SIZE,
+	                MSG_WAITALL, ( struct sockaddr *) &cliaddr,
+	                &len);
 	    printf("buf[0] is %d\n", buf[0]) ;
 	    fflush(stdout) ;
+	    bytes += n ;
 	}
 	gettimeofday(&end, NULL);
 	double duration=(end.tv_sec-start.tv_sec) + (end.tv_usec-start.tv_usec)*1e-6;
