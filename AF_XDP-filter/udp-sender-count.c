@@ -1,5 +1,5 @@
 /*
- * udp sender for bandwidth test
+ * udp sender
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/time.h>
+#include <assert.h>
 
 #define BUF_SIZE 1
 
@@ -17,8 +18,6 @@ int main(int argc, char *argv[])
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 	int sfd, s, j;
-	size_t len;
-	ssize_t nread;
 	char buf[BUF_SIZE];
 	struct timeval start, end ;
 	unsigned int repcount;
@@ -70,7 +69,8 @@ int main(int argc, char *argv[])
 	gettimeofday(&start,NULL) ;
 	for(j=0; j<repcount; j += 1) {
 		buf[0]=j & 0xff;
-	    write(sfd, buf, BUF_SIZE) ;
+	    int rc=write(sfd, buf, BUF_SIZE) ;
+	    assert(rc == BUF_SIZE) ;
 	}
 	gettimeofday(&end, NULL);
 	double duration=(end.tv_sec-start.tv_sec) + (end.tv_usec-start.tv_usec)*1e-6;
