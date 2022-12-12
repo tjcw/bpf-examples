@@ -14,7 +14,10 @@ then
   tcpdump_vpeer2_pid=$!
 fi
 
-sleep 120
+../udp-receiver 10.10.0.20 50000 2 &
+udp_receiver_pid=$!
+sleep 20
+kill ${udp_receiver_pid}
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_vpeer2_pid}
