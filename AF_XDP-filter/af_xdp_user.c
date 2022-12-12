@@ -628,7 +628,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
 				if (k_transmit_to_receiver) {
-					xsk_ring_prod__submit(&(xsk_src->xsk->tx),
+					xsk_ring_prod__submit((xsk_src->xsk->tx),
 								  1);
 				} else {
 					uint64_t tx_addr=umem_alloc_umem_frame(&xsk_tx->socket_info.umem);
