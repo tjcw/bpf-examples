@@ -70,7 +70,7 @@ enum {
 	k_timestamp = true,
 	k_showpacket = true,
 	k_diagnose_setns = false,
-	k_transmit_to_receiver = true
+	k_transmit_to_receiver = false
 };
 
 struct xsk_umem_info {
