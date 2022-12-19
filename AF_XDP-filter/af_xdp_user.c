@@ -817,8 +817,6 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 			printf("addr=0x%lx len=%u transmitted=%u\n", addr, len,
 			       transmitted);
 		if (!transmitted) {
-			printf("addr=0x%lx len=%u transmitted=%u calling umem_free_umem_frame\n",
-			       addr, len, transmitted);
 			umem_free_umem_frame(umem_info, addr);
 		}
 
