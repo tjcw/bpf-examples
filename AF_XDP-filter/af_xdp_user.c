@@ -381,7 +381,7 @@ error_exit:
 }
 
 static struct all_socket_info *xsk_configure_socket_all(struct config *cfg,
-							int xsks_map_fd, struct xsk_umem *umem)
+							int xsks_map_fd, struct xsk_umem_info *umem_info)
 {
 	struct all_socket_info *xsk_info_all = calloc(1, sizeof(*xsk_info_all));
 	int queue_count = cfg->xsk_if_queue;
@@ -392,7 +392,7 @@ static struct all_socket_info *xsk_configure_socket_all(struct config *cfg,
 	}
 	for (int q = 0; q < queue_count; q += 1) {
 		xsk_info_all->xsk_socket_info[q] =
-			xsk_configure_socket(cfg, xsks_map_fd, q, umem);
+			xsk_configure_socket(cfg, xsks_map_fd, q, umem_info);
 		if (xsk_info_all->xsk_socket_info[q] == NULL) {
 			fprintf(stderr, "ERROR: Cannot set up socket %d\n", q);
 			return NULL;
@@ -405,7 +405,7 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg, struct
 {
 	struct tx_socket_info *tx_info =
 		calloc(1, sizeof(struct tx_socket_info));
-	tx_info->outstanding_tx = 0;
+	tx_info->socket_info.outstanding_tx = 0;
 
 	struct xsk_socket_config xsk_cfg;
 	int ret;
@@ -684,7 +684,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						->len = len;
 					xsk_ring_prod__submit(&(xsk_tx->socket_info.txq),
 								  1);
-					xsk_tx->outstanding_tx++;
+					xsk_tx->socket_info.outstanding_tx++;
 
 					stats->stats.tx_bytes += len;
 					stats->stats.tx_packets += 1;
@@ -705,9 +705,9 @@ static void complete_tx(struct tx_socket_info *xsk_tx, struct xsk_umem_info *ume
 	uint32_t idx_cq;
 	if (k_instrument) {
 		fprintf(stderr, "complete_tx entry, outstanding_tx=%d\n",
-			xsk_tx->outstanding_tx);
+			xsk_tx->socket_info.outstanding_tx);
 	}
-	if (!xsk_tx->outstanding_tx)
+	if (!xsk_tx->socket_info.outstanding_tx)
 		return;
 
 	sendto(xsk_socket__fd(xsk_tx->socket_info.xsk), NULL, 0, MSG_DONTWAIT,
@@ -735,7 +735,7 @@ static void complete_tx(struct tx_socket_info *xsk_tx, struct xsk_umem_info *ume
 						     idx_cq++));
 		}
 
-		xsk_ring_cons__release(&xsk_tx->socket_info.cq, completed);
+		xsk_ring_cons__release(&xsk_tx->socket_info.umem_cq, completed);
 		xsk_tx->socket_info.outstanding_tx -=
 				          completed < xsk_tx->socket_info.outstanding_tx ?
 						  completed :
@@ -743,7 +743,7 @@ static void complete_tx(struct tx_socket_info *xsk_tx, struct xsk_umem_info *ume
 	}
 	if (k_instrument) {
 		fprintf(stderr, "complete_tx exit, outstanding_tx=%d\n",
-			xsk_tx->outstanding_tx);
+			xsk_tx->socket_info.outstanding_tx);
 	}
 }
 
@@ -836,7 +836,7 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 			xsk_ring_cons__rx_desc(&xsk_src->rxq, idx_rx++)->len;
 
 		bool transmitted = process_packet(xsk_src, xsk_tx, addr, len,
-						  stats, tun_fd, accept_map_fd);
+						  stats, tun_fd, accept_map_fd, umem_info);
 
 		if (k_instrument)
 			printf("addr=0x%lx len=%u transmitted=%u\n", addr, len,
@@ -852,19 +852,20 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 	}
 
 	stats->stats.rx_batch_count += 1;
-	xsk_ring_cons__release(&xsk_src->rx, rcvd);
+	xsk_ring_cons__release(&xsk_src->rxq, rcvd);
 	/* Do we need to wake up the kernel for transmission */
 //	if( k_transmit_to_receiver)
 //		complete_tx_on_rx(xsk_src);
 //	else
-		complete_tx(xsk_tx);
+		complete_tx(xsk_tx, umem_info);
 }
 
 static void rx_and_process(struct config *cfg,
 			   struct all_socket_info *all_socket_info,
 			   struct tx_socket_info *tx_socket_info,
 			   struct socket_stats *stats, int tun_fd,
-			   int accept_map_fd)
+			   int accept_map_fd,
+			   struct xsk_umem_info *umem_info)
 {
 	struct pollfd fds[k_rx_queue_count_max];
 	int ret, nfds = cfg->xsk_if_queue;
@@ -891,7 +892,7 @@ static void rx_and_process(struct config *cfg,
 				handle_receive_packets(
 					all_socket_info->xsk_socket_info[q],
 					tx_socket_info, stats, tun_fd,
-					accept_map_fd);
+					accept_map_fd, umem_info);
 			}
 		}
 	}
@@ -1201,7 +1202,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	struct xsk_umem_info umem_info ;
-	configure_xsk_umem(&(umem_info.umem), packet_buffer, packet_buffer_size,
+	configure_xsk_umem(&umem_info, packet_buffer, packet_buffer_size,
 			   &(umem_info.umem_fq), &(umem_info.umem_cq));
 
 	all_socket_info = xsk_configure_socket_all(&cfg, xsks_map_fd, umem_info.umem);
