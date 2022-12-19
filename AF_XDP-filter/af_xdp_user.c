@@ -69,7 +69,8 @@ enum {
 	k_skipping = false,
 	k_timestamp = true,
 	k_showpacket = true,
-	k_diagnose_setns = false
+	k_diagnose_setns = false,
+	k_share_rxtx_umem = true
 //	,
 //	k_transmit_to_receiver = false
 };
@@ -629,6 +630,56 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						strerror(errno));
 					exit(EXIT_FAILURE);
 				}
+			} else if (k_share_rxtx_umem) {
+//				struct ethhdr *tx_eth = (struct ethhdr *)tx_pkt;
+				uint64_t tx_addr =  addr;
+				struct ethhdr *tx_eth = eth;
+
+//				ssize_t ret = xsk_ring_prod__reserve(
+//					&(xsk_tx->socket_info.txq), 1, &tx_idx);
+				if (k_instrument) {
+					hexdump(stderr, write_addr,
+						(write_len < 32) ? write_len :
+								   32);
+					fprintf(stderr,
+						"Write length %lu ret=%ld\n",
+						write_len, ret);
+				}
+				if (ret != 1) {
+					/* No more transmit slots, drop the packet */
+					return false;
+				}
+
+				/* Swap in the revised mac addresses */
+				if (k_instrument) {
+					fprintf(stderr,
+						"Swapping source mac from ");
+					show_mac(eth->h_source);
+					fprintf(stderr, " to ");
+					show_mac(xsk_tx->src_mac);
+					fprintf(stderr, " and dst mac from ");
+					show_mac(eth->h_dest);
+					fprintf(stderr, " to ");
+					show_mac(xsk_tx->dst_mac);
+					fprintf(stderr, "\n");
+				}
+				memcpy(tx_eth->h_source, xsk_tx->src_mac,
+					   ETH_ALEN);
+				memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
+
+				xsk_ring_prod__tx_desc(
+					&(xsk_tx->socket_info.txq), tx_idx)
+					->addr = tx_addr;
+				xsk_ring_prod__tx_desc(
+					&(xsk_tx->socket_info.txq), tx_idx)
+					->len = len;
+				xsk_ring_prod__submit(&(xsk_tx->socket_info.txq),
+							  1);
+				xsk_tx->socket_info.outstanding_tx++;
+
+				stats->stats.tx_bytes += len;
+				stats->stats.tx_packets += 1;
+				return true; // Using the rx umem for transmission
 			} else {
 				/* Writing to output queue */
 				/* Here we sent the packet out of the receive port. Note that
