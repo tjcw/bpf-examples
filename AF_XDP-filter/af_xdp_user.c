@@ -235,10 +235,11 @@ static bool global_exit;
 static struct xsk_umem_info *configure_xsk_umem(struct xsk_umem_info *umem,
 						void *buffer, uint64_t size,
 						struct xsk_ring_prod *fq,
-						struct xsk_ring_cons *cq)
+						struct xsk_ring_cons *cq,
+						unsigned long frame_count )
 {
 	int ret;
-	int i;
+	unsigned long i;
 
 	ret = xsk_umem__create(&umem->umem, buffer, size, fq, cq, NULL);
 	if (ret) {
@@ -250,10 +251,10 @@ static struct xsk_umem_info *configure_xsk_umem(struct xsk_umem_info *umem,
 	umem->mark_buffer = k_verify_umem ? calloc(size, 1) : NULL;
 	/* Initialize umem frame allocation */
 
-	for (i = 0; i < 2 * NUM_FRAMES; i++)
+	for (i = 0; i < frame_count; i++)
 		umem->umem_frame_addr[i] = i * FRAME_SIZE;
 
-	umem->umem_frame_free = 2 * NUM_FRAMES;
+	umem->umem_frame_free = frame_count;
 	return umem;
 }
 
@@ -1171,7 +1172,7 @@ int main(int argc, char **argv)
 	}
 	struct xsk_umem_info umem_info;
 	configure_xsk_umem(&umem_info, packet_buffer, packet_buffer_size,
-			   &(umem_info.umem_fq), &(umem_info.umem_cq));
+			   &(umem_info.umem_fq), &(umem_info.umem_cq), NUM_FRAMES * 2 * (cfg.xsk_if_queue + 1));
 
 	all_socket_info =
 		xsk_configure_socket_all(&cfg, xsks_map_fd, &umem_info);
