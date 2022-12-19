@@ -61,22 +61,24 @@
 const char *pin_basedir = "/sys/fs/bpf";
 
 enum {
-	k_instrument = false,         // Whether to display trace
-	k_instrument_detail = false,  // Whether to display detailed trace
-	k_receive_tuntap = false,     // Whether to write packets to a tun interface
-	k_verify_umem = false,        // Whether to check umem usage
-	k_verbose = false,            // Whether to give verbose output
-	k_timestamp = false,          // Whether to put timestamps on trace output
-	k_showpacket = false,         // Whether to display packet contents
-	k_diagnose_setns = false,     // Whether to trace setns processing
-	k_share_rxtx_umem = true,     // Whether to share receive and transmit buffers
-	k_rewrite_mac_addresses = false // Whether to rewrite the source and destinationMAC addresses
+	k_instrument = false, // Whether to display trace
+	k_instrument_detail = false, // Whether to display detailed trace
+	k_receive_tuntap = false, // Whether to write packets to a tun interface
+	k_verify_umem = false, // Whether to check umem usage
+	k_verbose = false, // Whether to give verbose output
+	k_timestamp = false, // Whether to put timestamps on trace output
+	k_showpacket = false, // Whether to display packet contents
+	k_diagnose_setns = false, // Whether to trace setns processing
+	k_share_rxtx_umem =
+		true, // Whether to share receive and transmit buffers
+	k_rewrite_mac_addresses =
+		false // Whether to rewrite the source and destinationMAC addresses
 };
 
 struct xsk_umem_info {
 	struct xsk_umem *umem;
-	struct xsk_ring_prod umem_fq ;
-	struct xsk_ring_cons umem_cq ;
+	struct xsk_ring_prod umem_fq;
+	struct xsk_ring_cons umem_cq;
 	void *buffer;
 	uint64_t umem_frame_addr[NUM_FRAMES * 2];
 	uint32_t umem_frame_free;
@@ -298,7 +300,8 @@ static uint64_t xsk_umem_free_frames(struct xsk_umem_info *umem)
 }
 
 static struct xsk_socket_info *
-xsk_configure_socket(struct config *cfg, int xsks_map_fd, int if_queue, struct xsk_umem_info *umem_info)
+xsk_configure_socket(struct config *cfg, int xsks_map_fd, int if_queue,
+		     struct xsk_umem_info *umem_info)
 {
 	struct xsk_socket_config xsk_cfg;
 	struct xsk_socket_info *xsk_info;
@@ -357,7 +360,8 @@ xsk_configure_socket(struct config *cfg, int xsks_map_fd, int if_queue, struct x
 		*xsk_ring_prod__fill_addr(&xsk_info->umem_fq, idx++) =
 			umem_alloc_umem_frame(umem_info);
 
-	xsk_ring_prod__submit(&xsk_info->umem_fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
+	xsk_ring_prod__submit(&xsk_info->umem_fq,
+			      XSK_RING_PROD__DEFAULT_NUM_DESCS);
 
 	return xsk_info;
 
@@ -366,8 +370,9 @@ error_exit:
 	return NULL;
 }
 
-static struct all_socket_info *xsk_configure_socket_all(struct config *cfg,
-							int xsks_map_fd, struct xsk_umem_info *umem_info)
+static struct all_socket_info *
+xsk_configure_socket_all(struct config *cfg, int xsks_map_fd,
+			 struct xsk_umem_info *umem_info)
 {
 	struct all_socket_info *xsk_info_all = calloc(1, sizeof(*xsk_info_all));
 	int queue_count = cfg->xsk_if_queue;
@@ -387,7 +392,8 @@ static struct all_socket_info *xsk_configure_socket_all(struct config *cfg,
 	return xsk_info_all;
 }
 
-static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg, struct xsk_umem *umem)
+static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
+						      struct xsk_umem *umem)
 {
 	struct tx_socket_info *tx_info =
 		calloc(1, sizeof(struct tx_socket_info));
@@ -403,10 +409,10 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg, struct
 	xsk_cfg.bind_flags = cfg->xsk_bind_flags;
 	xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
 	ret = xsk_socket__create_shared(
-		&tx_info->socket_info.xsk, cfg->redirect_ifname, 0,
-		umem, &tx_info->socket_info.rxq,
-		&tx_info->socket_info.txq, &tx_info->socket_info.umem_fq,
-		&tx_info->socket_info.umem_cq, &xsk_cfg);
+		&tx_info->socket_info.xsk, cfg->redirect_ifname, 0, umem,
+		&tx_info->socket_info.rxq, &tx_info->socket_info.txq,
+		&tx_info->socket_info.umem_fq, &tx_info->socket_info.umem_cq,
+		&xsk_cfg);
 
 	printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
 	if (ret)
@@ -582,20 +588,18 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					exit(EXIT_FAILURE);
 				}
 			} else if (k_share_rxtx_umem) {
-				uint64_t tx_addr =  addr;
+				uint64_t tx_addr = addr;
 				struct ethhdr *tx_eth = eth;
 
 				if (k_instrument) {
 					hexdump(stderr, write_addr,
 						(write_len < 32) ? write_len :
 								   32);
-					fprintf(stderr,
-						"Write length %lu\n",
+					fprintf(stderr, "Write length %lu\n",
 						write_len);
 				}
 
-				if (k_rewrite_mac_addresses)
-				{
+				if (k_rewrite_mac_addresses) {
 					/* Swap in the revised mac addresses */
 					if (k_instrument) {
 						fprintf(stderr,
@@ -603,15 +607,17 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						show_mac(eth->h_source);
 						fprintf(stderr, " to ");
 						show_mac(xsk_tx->src_mac);
-						fprintf(stderr, " and dst mac from ");
+						fprintf(stderr,
+							" and dst mac from ");
 						show_mac(eth->h_dest);
 						fprintf(stderr, " to ");
 						show_mac(xsk_tx->dst_mac);
 						fprintf(stderr, "\n");
 					}
-					memcpy(tx_eth->h_source, xsk_tx->src_mac,
-						   ETH_ALEN);
-					memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
+					memcpy(tx_eth->h_source,
+					       xsk_tx->src_mac, ETH_ALEN);
+					memcpy(tx_eth->h_dest, xsk_tx->dst_mac,
+					       ETH_ALEN);
 				}
 				xsk_ring_prod__tx_desc(
 					&(xsk_tx->socket_info.txq), tx_idx)
@@ -619,8 +625,8 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				xsk_ring_prod__tx_desc(
 					&(xsk_tx->socket_info.txq), tx_idx)
 					->len = len;
-				xsk_ring_prod__submit(&(xsk_tx->socket_info.txq),
-							  1);
+				xsk_ring_prod__submit(
+					&(xsk_tx->socket_info.txq), 1);
 				xsk_tx->socket_info.outstanding_tx++;
 
 				stats->stats.tx_bytes += len;
@@ -632,17 +638,24 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
 				{
-					uint64_t tx_addr=umem_alloc_umem_frame(umem_info);
-					uint8_t *tx_pkt = xsk_umem__get_data(umem_info->buffer, tx_addr);
+					uint64_t tx_addr =
+						umem_alloc_umem_frame(
+							umem_info);
+					uint8_t *tx_pkt = xsk_umem__get_data(
+						umem_info->buffer, tx_addr);
 
-					memcpy(tx_pkt, pkt, len) ; // Copy the packet from the receive buffer to the transmit buffer
-					struct ethhdr *tx_eth = (struct ethhdr *)tx_pkt;
+					memcpy(tx_pkt, pkt,
+					       len); // Copy the packet from the receive buffer to the transmit buffer
+					struct ethhdr *tx_eth =
+						(struct ethhdr *)tx_pkt;
 					ssize_t ret = xsk_ring_prod__reserve(
-						&(xsk_tx->socket_info.txq), 1, &tx_idx);
+						&(xsk_tx->socket_info.txq), 1,
+						&tx_idx);
 					if (k_instrument) {
 						hexdump(stderr, write_addr,
-							(write_len < 32) ? write_len :
-									   32);
+							(write_len < 32) ?
+								write_len :
+								32);
 						fprintf(stderr,
 							"Write length %lu ret=%ld\n",
 							write_len, ret);
@@ -652,34 +665,41 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						return false;
 					}
 
-					if (k_rewrite_mac_addresses)
-					{
+					if (k_rewrite_mac_addresses) {
 						/* Swap in the revised mac addresses */
 						if (k_instrument) {
 							fprintf(stderr,
 								"Swapping source mac from ");
 							show_mac(eth->h_source);
 							fprintf(stderr, " to ");
-							show_mac(xsk_tx->src_mac);
-							fprintf(stderr, " and dst mac from ");
+							show_mac(
+								xsk_tx->src_mac);
+							fprintf(stderr,
+								" and dst mac from ");
 							show_mac(eth->h_dest);
 							fprintf(stderr, " to ");
-							show_mac(xsk_tx->dst_mac);
+							show_mac(
+								xsk_tx->dst_mac);
 							fprintf(stderr, "\n");
 						}
-						memcpy(tx_eth->h_source, xsk_tx->src_mac,
-							   ETH_ALEN);
-						memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
+						memcpy(tx_eth->h_source,
+						       xsk_tx->src_mac,
+						       ETH_ALEN);
+						memcpy(tx_eth->h_dest,
+						       xsk_tx->dst_mac,
+						       ETH_ALEN);
 					}
 
 					xsk_ring_prod__tx_desc(
-						&(xsk_tx->socket_info.txq), tx_idx)
+						&(xsk_tx->socket_info.txq),
+						tx_idx)
 						->addr = tx_addr;
 					xsk_ring_prod__tx_desc(
-						&(xsk_tx->socket_info.txq), tx_idx)
+						&(xsk_tx->socket_info.txq),
+						tx_idx)
 						->len = len;
-					xsk_ring_prod__submit(&(xsk_tx->socket_info.txq),
-								  1);
+					xsk_ring_prod__submit(
+						&(xsk_tx->socket_info.txq), 1);
 					xsk_tx->socket_info.outstanding_tx++;
 
 					stats->stats.tx_bytes += len;
@@ -695,7 +715,8 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 	return false; // Not transmitting anything
 }
 
-static void complete_tx(struct tx_socket_info *xsk_tx, struct xsk_umem_info *umem)
+static void complete_tx(struct tx_socket_info *xsk_tx,
+			struct xsk_umem_info *umem)
 {
 	unsigned int completed;
 	uint32_t idx_cq;
@@ -725,17 +746,17 @@ static void complete_tx(struct tx_socket_info *xsk_tx, struct xsk_umem_info *ume
 					"calling umem_free_umem_frame i=%d\n",
 					i);
 			}
-			umem_free_umem_frame(umem,
-					     *xsk_ring_cons__comp_addr(
-						     &xsk_tx->socket_info.umem_cq,
-						     idx_cq++));
+			umem_free_umem_frame(
+				umem, *xsk_ring_cons__comp_addr(
+					      &xsk_tx->socket_info.umem_cq,
+					      idx_cq++));
 		}
 
 		xsk_ring_cons__release(&xsk_tx->socket_info.umem_cq, completed);
 		xsk_tx->socket_info.outstanding_tx -=
-				          completed < xsk_tx->socket_info.outstanding_tx ?
-						  completed :
-						  xsk_tx->socket_info.outstanding_tx;
+			completed < xsk_tx->socket_info.outstanding_tx ?
+				completed :
+				xsk_tx->socket_info.outstanding_tx;
 	}
 	if (k_instrument) {
 		fprintf(stderr, "complete_tx exit, outstanding_tx=%d\n",
@@ -785,7 +806,8 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 			xsk_ring_cons__rx_desc(&xsk_src->rxq, idx_rx++)->len;
 
 		bool transmitted = process_packet(xsk_src, xsk_tx, addr, len,
-						  stats, tun_fd, accept_map_fd, umem_info);
+						  stats, tun_fd, accept_map_fd,
+						  umem_info);
 
 		if (k_instrument)
 			printf("addr=0x%lx len=%u transmitted=%u\n", addr, len,
@@ -810,8 +832,7 @@ static void rx_and_process(struct config *cfg,
 			   struct all_socket_info *all_socket_info,
 			   struct tx_socket_info *tx_socket_info,
 			   struct socket_stats *stats, int tun_fd,
-			   int accept_map_fd,
-			   struct xsk_umem_info *umem_info)
+			   int accept_map_fd, struct xsk_umem_info *umem_info)
 {
 	struct pollfd fds[k_rx_queue_count_max];
 	int ret, nfds = cfg->xsk_if_queue;
@@ -1138,7 +1159,8 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	/* Set up receive sockets */
-	int packet_buffer_size = NUM_FRAMES * FRAME_SIZE * 2* (cfg.xsk_if_queue+1) ;
+	int packet_buffer_size =
+		NUM_FRAMES * FRAME_SIZE * 2 * (cfg.xsk_if_queue + 1);
 	void *packet_buffer;
 	if (posix_memalign(&packet_buffer,
 			   getpagesize(), /* PAGE_SIZE aligned */
@@ -1147,11 +1169,12 @@ int main(int argc, char **argv)
 			strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	struct xsk_umem_info umem_info ;
+	struct xsk_umem_info umem_info;
 	configure_xsk_umem(&umem_info, packet_buffer, packet_buffer_size,
 			   &(umem_info.umem_fq), &(umem_info.umem_cq));
 
-	all_socket_info = xsk_configure_socket_all(&cfg, xsks_map_fd, &umem_info);
+	all_socket_info =
+		xsk_configure_socket_all(&cfg, xsks_map_fd, &umem_info);
 	if (all_socket_info == NULL) {
 		fprintf(stderr, "ERROR: Can't setup AF_XDP sockets \"%s\"\n",
 			strerror(errno));
