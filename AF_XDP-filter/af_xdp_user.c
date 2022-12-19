@@ -53,6 +53,7 @@
 #define FRAME_SIZE XSK_UMEM__DEFAULT_FRAME_SIZE
 #define RX_BATCH_SIZE 64
 #define INVALID_UMEM_FRAME UINT64_MAX
+#define IF_QUEUE_MAX 64
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -80,7 +81,7 @@ struct xsk_umem_info {
 	struct xsk_ring_prod umem_fq;
 	struct xsk_ring_cons umem_cq;
 	void *buffer;
-	uint64_t umem_frame_addr[NUM_FRAMES * 2];
+	uint64_t umem_frame_addr[NUM_FRAMES * 2 * (IF_QUEUE_MAX+1)];
 	uint32_t umem_frame_free;
 	uint64_t allocation_count;
 	uint64_t free_count;
@@ -1160,6 +1161,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	/* Set up receive sockets */
+	assert(cfg.xsk_if_queue <= IF_QUEUE_MAX) ;
 	int packet_buffer_size =
 		NUM_FRAMES * FRAME_SIZE * 2 * (cfg.xsk_if_queue + 1);
 	void *packet_buffer;
