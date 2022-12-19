@@ -69,8 +69,9 @@ enum {
 	k_skipping = false,
 	k_timestamp = true,
 	k_showpacket = true,
-	k_diagnose_setns = false,
-	k_transmit_to_receiver = false
+	k_diagnose_setns = false
+//	,
+//	k_transmit_to_receiver = false
 };
 
 struct xsk_umem_info {
@@ -125,7 +126,7 @@ struct all_socket_info {
 
 struct tx_socket_info {
 	struct xsk_socket_info socket_info;
-	int outstanding_tx;
+//	int outstanding_tx;
 	unsigned char src_mac[ETH_ALEN];
 	unsigned char dst_mac[ETH_ALEN];
 };
@@ -308,7 +309,7 @@ static uint64_t xsk_umem_free_frames(struct xsk_umem_info *umem)
 }
 
 static struct xsk_socket_info *
-xsk_configure_socket(struct config *cfg, int xsks_map_fd, int if_queue, struct xsk_umem *umem)
+xsk_configure_socket(struct config *cfg, int xsks_map_fd, int if_queue, struct xsk_umem_info *umem_info)
 {
 	struct xsk_socket_config xsk_cfg;
 	struct xsk_socket_info *xsk_info;
@@ -337,7 +338,7 @@ xsk_configure_socket(struct config *cfg, int xsks_map_fd, int if_queue, struct x
 	xsk_cfg.bind_flags = cfg->xsk_bind_flags;
 	xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
 	ret = xsk_socket__create_shared(&xsk_info->xsk, cfg->ifname, if_queue,
-					umem, &xsk_info->rxq,
+					umem_info->umem, &xsk_info->rxq,
 					&xsk_info->txq, &(xsk_info->umem_fq),
 					&(xsk_info->umem_cq), &xsk_cfg);
 
@@ -368,7 +369,7 @@ xsk_configure_socket(struct config *cfg, int xsks_map_fd, int if_queue, struct x
 
 	for (int i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS; i++)
 		*xsk_ring_prod__fill_addr(&xsk_info->umem_fq, idx++) =
-			umem_alloc_umem_frame(umem);
+			umem_alloc_umem_frame(umem_info);
 
 	xsk_ring_prod__submit(&xsk_info->umem_fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
 
@@ -552,9 +553,9 @@ static bool filter_pass_icmp(int accept_map_fd, __u32 saddr, __u32 daddr,
 static bool process_packet(struct xsk_socket_info *xsk_src,
 			   struct tx_socket_info *xsk_tx, uint64_t addr,
 			   uint32_t len, struct socket_stats *stats, int tun_fd,
-			   int accept_map_fd)
+			   int accept_map_fd, struct xsk_umem_info *umem_info)
 {
-	uint8_t *pkt = xsk_umem__get_data(xsk_src->umem.buffer, addr);
+	uint8_t *pkt = xsk_umem__get_data(umem_info->buffer, addr);
 	bool pass = false;
 	uint32_t tx_idx = 0;
 
@@ -633,17 +634,18 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				/* Here we sent the packet out of the receive port. Note that
 				 * we allocate one entry and schedule it. Your design would be
 				 * faster if you do batch processing/transmission */
-				if (k_transmit_to_receiver) {
-					xsk_ring_prod__submit((xsk_src->xsk->tx),
-								  1);
-				} else {
-					uint64_t tx_addr=umem_alloc_umem_frame(&xsk_tx->socket_info.umem);
-					uint8_t *tx_pkt = xsk_umem__get_data(xsk_tx->socket_info.umem.buffer, tx_addr);
+//				if (k_transmit_to_receiver) {
+//					xsk_ring_prod__submit((xsk_src->xsk->tx),
+//								  1);
+//				} else
+				{
+					uint64_t tx_addr=umem_alloc_umem_frame(umem_info);
+					uint8_t *tx_pkt = xsk_umem__get_data(umem_info->buffer, tx_addr);
 
 					memcpy(tx_pkt, pkt, len) ; // Copy the packet from the receive buffer to the transmit buffer
 					struct ethhdr *tx_eth = (struct ethhdr *)tx_pkt;
 					ssize_t ret = xsk_ring_prod__reserve(
-						&(xsk_tx->socket_info.tx), 1, &tx_idx);
+						&(xsk_tx->socket_info.txq), 1, &tx_idx);
 					if (k_instrument) {
 						hexdump(stderr, write_addr,
 							(write_len < 32) ? write_len :
@@ -675,12 +677,12 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
 
 					xsk_ring_prod__tx_desc(
-						&(xsk_tx->socket_info.tx), tx_idx)
+						&(xsk_tx->socket_info.txq), tx_idx)
 						->addr = tx_addr;
 					xsk_ring_prod__tx_desc(
-						&(xsk_tx->socket_info.tx), tx_idx)
+						&(xsk_tx->socket_info.txq), tx_idx)
 						->len = len;
-					xsk_ring_prod__submit(&(xsk_tx->socket_info.tx),
+					xsk_ring_prod__submit(&(xsk_tx->socket_info.txq),
 								  1);
 					xsk_tx->outstanding_tx++;
 
@@ -697,7 +699,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 	return false; // Not transmitting anything
 }
 
-static void complete_tx(struct tx_socket_info *xsk_tx)
+static void complete_tx(struct tx_socket_info *xsk_tx, struct xsk_umem_info *umem)
 {
 	unsigned int completed;
 	uint32_t idx_cq;
@@ -712,7 +714,7 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 	       NULL, 0);
 
 	/* Collect/free completed TX buffers */
-	completed = xsk_ring_cons__peek(&xsk_tx->socket_info.cq,
+	completed = xsk_ring_cons__peek(&xsk_tx->socket_info.umem_cq,
 					XSK_RING_CONS__DEFAULT_NUM_DESCS,
 					&idx_cq);
 
@@ -727,16 +729,17 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 					"calling umem_free_umem_frame i=%d\n",
 					i);
 			}
-			umem_free_umem_frame(&xsk_tx->socket_info.umem,
+			umem_free_umem_frame(umem,
 					     *xsk_ring_cons__comp_addr(
-						     &xsk_tx->socket_info.cq,
+						     &xsk_tx->socket_info.umem_cq,
 						     idx_cq++));
 		}
 
 		xsk_ring_cons__release(&xsk_tx->socket_info.cq, completed);
-		xsk_tx->outstanding_tx -= completed < xsk_tx->outstanding_tx ?
+		xsk_tx->socket_info.outstanding_tx -=
+				          completed < xsk_tx->socket_info.outstanding_tx ?
 						  completed :
-						  xsk_tx->outstanding_tx;
+						  xsk_tx->socket_info.outstanding_tx;
 	}
 	if (k_instrument) {
 		fprintf(stderr, "complete_tx exit, outstanding_tx=%d\n",
@@ -744,92 +747,93 @@ static void complete_tx(struct tx_socket_info *xsk_tx)
 	}
 }
 
-static void complete_tx_on_rx(struct xsk_socket_info *xsk_src)
-{
-	unsigned int completed;
-	uint32_t idx_cq;
-	if (k_instrument) {
-		fprintf(stderr, "complete_tx_on_rx entry, outstanding_tx=%d\n",
-				xsk_src->outstanding_tx);
-	}
-	if (!xsk_src->outstanding_tx)
-		return;
-
-	sendto(xsk_socket__fd(xsk_src->xsk), NULL, 0, MSG_DONTWAIT,
-	       NULL, 0);
-
-	/* Collect/free completed TX buffers */
-	completed = xsk_ring_cons__peek(&xsk_src->cq,
-					XSK_RING_CONS__DEFAULT_NUM_DESCS,
-					&idx_cq);
-
-	if (k_instrument) {
-		fprintf(stderr, "complete_tx_on_rx completed=%u\n", completed);
-	}
-
-	if (completed > 0) {
-		for (int i = 0; i < completed; i++) {
-			if (k_instrument) {
-				fprintf(stderr,
-					"calling umem_free_umem_frame i=%d\n",
-					i);
-			}
-			umem_free_umem_frame(&xsk_src->umem,
-					     *xsk_ring_cons__comp_addr(
-						     &xsk_src->cq,
-						     idx_cq++));
-		}
-
-		xsk_ring_cons__release(&xsk_src->cq, completed);
-		xsk_src->outstanding_tx -= completed < xsk_src->outstanding_tx ?
-						  completed :
-						  xsk_src->outstanding_tx;
-	}
-	if (k_instrument) {
-		fprintf(stderr, "complete_tx_on_rx exit, outstanding_tx=%d\n",
-			xsk_src->outstanding_tx);
-	}
-}
+//static void complete_tx_on_rx(struct xsk_socket_info *xsk_src)
+//{
+//	unsigned int completed;
+//	uint32_t idx_cq;
+//	if (k_instrument) {
+//		fprintf(stderr, "complete_tx_on_rx entry, outstanding_tx=%d\n",
+//				xsk_src->outstanding_tx);
+//	}
+//	if (!xsk_src->outstanding_tx)
+//		return;
+//
+//	sendto(xsk_socket__fd(xsk_src->xsk), NULL, 0, MSG_DONTWAIT,
+//	       NULL, 0);
+//
+//	/* Collect/free completed TX buffers */
+//	completed = xsk_ring_cons__peek(&xsk_src->umem_cq,
+//					XSK_RING_CONS__DEFAULT_NUM_DESCS,
+//					&idx_cq);
+//
+//	if (k_instrument) {
+//		fprintf(stderr, "complete_tx_on_rx completed=%u\n", completed);
+//	}
+//
+//	if (completed > 0) {
+//		for (int i = 0; i < completed; i++) {
+//			if (k_instrument) {
+//				fprintf(stderr,
+//					"calling umem_free_umem_frame i=%d\n",
+//					i);
+//			}
+//			umem_free_umem_frame(&xsk_src->umem,
+//					     *xsk_ring_cons__comp_addr(
+//						     &xsk_src->cq,
+//						     idx_cq++));
+//		}
+//
+//		xsk_ring_cons__release(&xsk_src->cq, completed);
+//		xsk_src->outstanding_tx -= completed < xsk_src->outstanding_tx ?
+//						  completed :
+//						  xsk_src->outstanding_tx;
+//	}
+//	if (k_instrument) {
+//		fprintf(stderr, "complete_tx_on_rx exit, outstanding_tx=%d\n",
+//			xsk_src->outstanding_tx);
+//	}
+//}
 
 static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 				   struct tx_socket_info *xsk_tx,
 				   struct socket_stats *stats, int tun_fd,
-				   int accept_map_fd)
+				   int accept_map_fd,
+				   struct xsk_umem_info *umem_info)
 {
 	unsigned int rcvd, stock_frames, i;
 	uint32_t idx_rx = 0, idx_fq = 0;
 	int ret;
 
-	rcvd = xsk_ring_cons__peek(&xsk_src->rx, RX_BATCH_SIZE, &idx_rx);
+	rcvd = xsk_ring_cons__peek(&xsk_src->rxq, RX_BATCH_SIZE, &idx_rx);
 	if (!rcvd)
 		return;
 
 	/* Stuff the ring with as much frames as possible */
-	stock_frames = xsk_prod_nb_free(&xsk_src->fq,
-					xsk_umem_free_frames(&xsk_src->umem));
+	stock_frames = xsk_prod_nb_free(&xsk_src->umem_fq,
+					xsk_umem_free_frames(umem_info));
 
 	if (stock_frames > 0) {
-		ret = xsk_ring_prod__reserve(&xsk_src->fq, stock_frames,
+		ret = xsk_ring_prod__reserve(&xsk_src->umem_fq, stock_frames,
 					     &idx_fq);
 
 		/* This should not happen, but just in case */
 		while (ret != stock_frames)
-			ret = xsk_ring_prod__reserve(&xsk_src->fq, rcvd,
+			ret = xsk_ring_prod__reserve(&xsk_src->umem_fq, rcvd,
 						     &idx_fq);
 
 		for (i = 0; i < stock_frames; i++)
-			*xsk_ring_prod__fill_addr(&xsk_src->fq, idx_fq++) =
-				umem_alloc_umem_frame(&xsk_src->umem);
+			*xsk_ring_prod__fill_addr(&xsk_src->umem_fq, idx_fq++) =
+				umem_alloc_umem_frame(umem_info);
 
-		xsk_ring_prod__submit(&xsk_src->fq, stock_frames);
+		xsk_ring_prod__submit(&xsk_src->umem_fq, stock_frames);
 	}
 
 	/* Process received packets */
 	for (i = 0; i < rcvd; i++) {
 		uint64_t addr =
-			xsk_ring_cons__rx_desc(&xsk_src->rx, idx_rx)->addr;
+			xsk_ring_cons__rx_desc(&xsk_src->rxq, idx_rx)->addr;
 		uint32_t len =
-			xsk_ring_cons__rx_desc(&xsk_src->rx, idx_rx++)->len;
+			xsk_ring_cons__rx_desc(&xsk_src->rxq, idx_rx++)->len;
 
 		bool transmitted = process_packet(xsk_src, xsk_tx, addr, len,
 						  stats, tun_fd, accept_map_fd);
@@ -840,7 +844,7 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 		if (!transmitted) {
 			printf("addr=0x%lx len=%u transmitted=%u calling umem_free_umem_frame\n",
 			       addr, len, transmitted);
-			umem_free_umem_frame(&xsk_src->umem, addr);
+			umem_free_umem_frame(umem_info, addr);
 		}
 
 		stats->stats.rx_bytes += len;
@@ -850,9 +854,9 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 	stats->stats.rx_batch_count += 1;
 	xsk_ring_cons__release(&xsk_src->rx, rcvd);
 	/* Do we need to wake up the kernel for transmission */
-	if( k_transmit_to_receiver)
-		complete_tx_on_rx(xsk_src);
-	else
+//	if( k_transmit_to_receiver)
+//		complete_tx_on_rx(xsk_src);
+//	else
 		complete_tx(xsk_tx);
 }
 
@@ -1198,7 +1202,7 @@ int main(int argc, char **argv)
 	}
 	struct xsk_umem_info umem_info ;
 	configure_xsk_umem(&(umem_info.umem), packet_buffer, packet_buffer_size,
-			   &(umem_info->umem_fq), &(umem_info->umem_cq));
+			   &(umem_info.umem_fq), &(umem_info.umem_cq));
 
 	all_socket_info = xsk_configure_socket_all(&cfg, xsks_map_fd, umem_info.umem);
 	if (all_socket_info == NULL) {
@@ -1286,10 +1290,11 @@ int main(int argc, char **argv)
 					rc, errno);
 			}
 		}
-		if ( k_transmit_to_receiver) {
-			tx_socket_info = NULL ;
-		} else {
-			tx_socket_info = xsk_configure_socket_tx(&cfg);
+//		if ( k_transmit_to_receiver) {
+//			tx_socket_info = NULL ;
+//		} else
+		{
+			tx_socket_info = xsk_configure_socket_tx(&cfg, umem_info.umem);
 			if (tx_socket_info == NULL) {
 				fprintf(stderr,
 					"ERROR: Failed calling xsk_configure_socket_tx "
