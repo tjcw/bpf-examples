@@ -85,6 +85,7 @@ struct xsk_umem_info {
 	uint64_t allocation_count;
 	uint64_t free_count;
 	char *mark_buffer;
+	uint64_t umem_frame_count;
 	uint64_t umem_frame_addr[NUM_FRAMES * 2 * (IF_QUEUE_MAX+1)];
 };
 
@@ -241,6 +242,7 @@ static struct xsk_umem_info *configure_xsk_umem(struct xsk_umem_info *umem,
 {
 	int ret;
 	unsigned long i;
+	umem->umem_frame_count = frame_count ;
 
 	ret = xsk_umem__create(&umem->umem, buffer, size, fq, cq, NULL);
 	if (ret) {
@@ -290,7 +292,7 @@ static void umem_free_umem_frame(struct xsk_umem_info *umem, uint64_t frame)
 		assert(umem->mark_buffer[aligned_frame] == 1);
 		umem->mark_buffer[aligned_frame] = 0;
 	}
-	assert(umem->umem_frame_free < 2 * NUM_FRAMES);
+	assert(umem->umem_frame_free < umem->umem_frame_count);
 
 	umem->umem_frame_addr[umem->umem_frame_free++] = frame;
 	umem->free_count += 1;
