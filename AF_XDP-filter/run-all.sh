@@ -29,6 +29,11 @@
   LEAVE=1 TCP_RR=1 PORT=50011 ./run.sh
 )
 (
+  cd udp-namespace-direct-with-dummy
+  ./teardown.sh
+  FILTER=af_xdp_kern PORT=50000 ./runns.sh
+)
+(
   cd ping-namespace
   FILTER=af_xdp_kern ./run.sh
 )
