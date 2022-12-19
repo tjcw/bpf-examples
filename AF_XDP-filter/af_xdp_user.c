@@ -829,7 +829,8 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 	stats->stats.rx_batch_count += 1;
 	xsk_ring_cons__release(&xsk_src->rxq, rcvd);
 	/* Do we need to wake up the kernel for transmission */
-	complete_tx(xsk_tx, umem_info);
+	if ( xsk_tx)
+		complete_tx(xsk_tx, umem_info);
 }
 
 static void rx_and_process(struct config *cfg,
