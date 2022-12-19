@@ -642,13 +642,13 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						(write_len < 32) ? write_len :
 								   32);
 					fprintf(stderr,
-						"Write length %lu ret=%ld\n",
-						write_len, ret);
+						"Write length %lu\n",
+						write_len);
 				}
-				if (ret != 1) {
-					/* No more transmit slots, drop the packet */
-					return false;
-				}
+//				if (ret != 1) {
+//					/* No more transmit slots, drop the packet */
+//					return false;
+//				}
 
 				/* Swap in the revised mac addresses */
 				if (k_instrument) {
