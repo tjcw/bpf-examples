@@ -1205,7 +1205,7 @@ int main(int argc, char **argv)
 	configure_xsk_umem(&umem_info, packet_buffer, packet_buffer_size,
 			   &(umem_info.umem_fq), &(umem_info.umem_cq));
 
-	all_socket_info = xsk_configure_socket_all(&cfg, xsks_map_fd, umem_info.umem);
+	all_socket_info = xsk_configure_socket_all(&cfg, xsks_map_fd, &umem_info);
 	if (all_socket_info == NULL) {
 		fprintf(stderr, "ERROR: Can't setup AF_XDP sockets \"%s\"\n",
 			strerror(errno));
@@ -1323,7 +1323,7 @@ int main(int argc, char **argv)
 	/* Receive and count packets than drop them */
 	gettimeofday(&(stats.start_time), NULL);
 	rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
-		       accept_map_fd);
+		       accept_map_fd, &umem_info);
 
 	/* Cleanup */
 	if (tun_fd != -1)
