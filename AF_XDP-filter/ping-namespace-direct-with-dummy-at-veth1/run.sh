@@ -87,7 +87,7 @@ then
   chown root.root vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
   tcpdump -r veth1.tcpdump
   tcpdump -r veth2.tcpdump
-  tcpdump -r vpeer2.tcpdump
+  tcpdump -r vpeer1.tcpdump
   tcpdump -r vpeer2.tcpdump
   tcpdump -r br0.tcpdump
 fi
