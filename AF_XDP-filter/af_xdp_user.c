@@ -81,11 +81,11 @@ struct xsk_umem_info {
 	struct xsk_ring_prod umem_fq;
 	struct xsk_ring_cons umem_cq;
 	void *buffer;
-	uint64_t umem_frame_addr[NUM_FRAMES * 2 * (IF_QUEUE_MAX+1)];
 	uint32_t umem_frame_free;
 	uint64_t allocation_count;
 	uint64_t free_count;
 	char *mark_buffer;
+	uint64_t umem_frame_addr[NUM_FRAMES * 2 * (IF_QUEUE_MAX+1)];
 };
 
 struct stats_record {
