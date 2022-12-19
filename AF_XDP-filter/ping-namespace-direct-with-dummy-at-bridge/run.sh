@@ -64,7 +64,7 @@ fi
     source_mac=$(ip netns exec ns1 ip a s dev vpeer1|awk '{ if($1 == "link/ether") { print $2 } }')
 ## Give a shell prompt here so I can explore what MAC addresses really need giving to af_xdp_user
 #    bash
-    DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -r veth1 -a 1 &
+    DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -r br0 -a 1 &
     af_pid=$!
     sleep 2
     ../af_xdp_user_dummy -S -d veth2 -Q 1 --filename ../af_xdp_kern_dummy.o &
