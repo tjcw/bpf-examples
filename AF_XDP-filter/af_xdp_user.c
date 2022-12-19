@@ -69,7 +69,8 @@ enum {
 	k_timestamp = false,          // Whether to put timestamps on trace output
 	k_showpacket = false,         // Whether to display packet contents
 	k_diagnose_setns = false,     // Whether to trace setns processing
-	k_share_rxtx_umem = true      // Whether to share receive and transmit buffers
+	k_share_rxtx_umem = true,     // Whether to share receive and transmit buffers
+	k_rewrite_mac_addresses = false // Whether to rewrite the source and destinationMAC addresses
 };
 
 struct xsk_umem_info {
@@ -593,23 +594,25 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						write_len);
 				}
 
-				/* Swap in the revised mac addresses */
-				if (k_instrument) {
-					fprintf(stderr,
-						"Swapping source mac from ");
-					show_mac(eth->h_source);
-					fprintf(stderr, " to ");
-					show_mac(xsk_tx->src_mac);
-					fprintf(stderr, " and dst mac from ");
-					show_mac(eth->h_dest);
-					fprintf(stderr, " to ");
-					show_mac(xsk_tx->dst_mac);
-					fprintf(stderr, "\n");
+				if (k_rewrite_mac_addresses)
+				{
+					/* Swap in the revised mac addresses */
+					if (k_instrument) {
+						fprintf(stderr,
+							"Swapping source mac from ");
+						show_mac(eth->h_source);
+						fprintf(stderr, " to ");
+						show_mac(xsk_tx->src_mac);
+						fprintf(stderr, " and dst mac from ");
+						show_mac(eth->h_dest);
+						fprintf(stderr, " to ");
+						show_mac(xsk_tx->dst_mac);
+						fprintf(stderr, "\n");
+					}
+					memcpy(tx_eth->h_source, xsk_tx->src_mac,
+						   ETH_ALEN);
+					memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
 				}
-				memcpy(tx_eth->h_source, xsk_tx->src_mac,
-					   ETH_ALEN);
-				memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
-
 				xsk_ring_prod__tx_desc(
 					&(xsk_tx->socket_info.txq), tx_idx)
 					->addr = tx_addr;
@@ -649,22 +652,25 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						return false;
 					}
 
-					/* Swap in the revised mac addresses */
-					if (k_instrument) {
-						fprintf(stderr,
-							"Swapping source mac from ");
-						show_mac(eth->h_source);
-						fprintf(stderr, " to ");
-						show_mac(xsk_tx->src_mac);
-						fprintf(stderr, " and dst mac from ");
-						show_mac(eth->h_dest);
-						fprintf(stderr, " to ");
-						show_mac(xsk_tx->dst_mac);
-						fprintf(stderr, "\n");
+					if (k_rewrite_mac_addresses)
+					{
+						/* Swap in the revised mac addresses */
+						if (k_instrument) {
+							fprintf(stderr,
+								"Swapping source mac from ");
+							show_mac(eth->h_source);
+							fprintf(stderr, " to ");
+							show_mac(xsk_tx->src_mac);
+							fprintf(stderr, " and dst mac from ");
+							show_mac(eth->h_dest);
+							fprintf(stderr, " to ");
+							show_mac(xsk_tx->dst_mac);
+							fprintf(stderr, "\n");
+						}
+						memcpy(tx_eth->h_source, xsk_tx->src_mac,
+							   ETH_ALEN);
+						memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
 					}
-					memcpy(tx_eth->h_source, xsk_tx->src_mac,
-						   ETH_ALEN);
-					memcpy(tx_eth->h_dest, xsk_tx->dst_mac, ETH_ALEN);
 
 					xsk_ring_prod__tx_desc(
 						&(xsk_tx->socket_info.txq), tx_idx)
