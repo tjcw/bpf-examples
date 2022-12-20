@@ -62,9 +62,9 @@
 const char *pin_basedir = "/sys/fs/bpf";
 
 enum {
-	k_instrument = false, // Whether to display trace
+	k_instrument = true, // Whether to display trace
 	k_instrument_detail = false, // Whether to display detailed trace
-	k_receive_tuntap = false, // Whether to write packets to a tun interface
+	k_receive_tuntap = true, // Whether to write packets to a tun interface
 	k_verify_umem = false, // Whether to check umem usage
 	k_verbose = false, // Whether to give verbose output
 	k_timestamp = false, // Whether to put timestamps on trace output
@@ -577,6 +577,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				ssize_t ret =
 					write(tun_fd, write_addr, write_len);
 				if (k_instrument) {
+					fprintf(stderr, "Written to tun\n") ;
 					hexdump(stderr, write_addr,
 						(write_len < 32) ? write_len :
 								   32);
