@@ -512,6 +512,10 @@ static bool filter_pass_icmp(int accept_map_fd, __u32 saddr, __u32 daddr,
 		fprintf(stderr, "bpf_map_update_elem returns %d\n", ret);
 	return true;
 }
+/*
+ * Process a packet. Returns true if the packet still needs space in the
+ * umem (because it is queued for transmission from there)
+ */
 static bool process_packet(struct xsk_socket_info *xsk_src,
 			   struct tx_socket_info *xsk_tx, uint64_t addr,
 			   uint32_t len, struct socket_stats *stats, int tun_fd,
@@ -592,6 +596,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						strerror(errno));
 					exit(EXIT_FAILURE);
 				}
+				return false ;
 			} else if (k_share_rxtx_umem) {
 				uint64_t tx_addr = addr;
 				struct ethhdr *tx_eth = eth;
