@@ -585,9 +585,10 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					hexdump(stderr, write_addr,
 						(write_len < 32) ? write_len :
 								   32);
+					int tlen=ntohs(ip->tot_len)
 					fprintf(stderr,
-						"Write length %lu actual %ld\n",
-						write_len, ret);
+						"Write length %lu actual %ld tlen=%d\n",
+						write_len, ret, tlen);
 				}
 				if (ret != write_len) {
 					fprintf(stderr,
