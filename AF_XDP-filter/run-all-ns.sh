@@ -16,7 +16,7 @@
 (
   cd udp-namespace-direct-with-dummy
   ./teardown.sh
-  FILTER=af_xdp_kern PORT=50000 ./runns.sh
+  FILTER=af_xdp_kern PORT=50000 ./run.sh
 )
 (
   cd ping-namespace
