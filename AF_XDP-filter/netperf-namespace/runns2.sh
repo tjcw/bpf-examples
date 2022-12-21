@@ -4,6 +4,9 @@
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 # Set TCPDUMP env var non-null to take tcpdumps of the interfaces
+iptables -P FORWARD ACCEPT
+iptables -F FORWARD
+
 ip link set lo up
 ip link set vpeer2 up
 ip addr add 10.10.0.20/16 dev vpeer2
