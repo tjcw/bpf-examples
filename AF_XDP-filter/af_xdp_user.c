@@ -938,6 +938,7 @@ static void stats_print(struct stats_record *stats_rec,
 		}
 	}
 	printf("\n");
+	fflush(stdout) ;
 }
 
 static void *stats_poll(void *arg)
