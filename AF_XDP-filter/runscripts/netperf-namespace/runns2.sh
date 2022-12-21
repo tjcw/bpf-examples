@@ -14,9 +14,9 @@ ip link set dev vpeer2 xdpgeneric off
 ip link set dev tun0 up
 if [[ -n "${TCPDUMP}" ]]
 then
-  tcpdump -i tun0 -w tun0.tcpdump &
+  tcpdump -v -i tun0 -w tun0.tcpdump &
   tcpdump_tun0_pid=$!
-  tcpdump -i vpeer2 -w vpeer2.tcpdump &
+  tcpdump -v -i vpeer2 -w vpeer2.tcpdump &
   tcpdump_vpeer2_pid=$!
 fi
 

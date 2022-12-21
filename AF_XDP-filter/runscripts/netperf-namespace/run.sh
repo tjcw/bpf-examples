@@ -48,9 +48,9 @@ iptables -F FORWARD
 
 if [[ -n "${TCPDUMP}" ]]
 then
-  tcpdump -i veth1 -w veth1.tcpdump &
+  tcpdump -v -i veth1 -w veth1.tcpdump &
   tcpdump_veth1_pid=$!
-  tcpdump -i veth2 -w veth2.tcpdump &
+  tcpdump -v -i veth2 -w veth2.tcpdump &
   tcpdump_veth2_pid=$!
 fi
 (
@@ -64,10 +64,10 @@ then
   kill -INT ${tcpdump_veth1_pid} ${tcpdump_veth2_pid}
   wait
   chown root.root tun0.tcpdump vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump 
-  tcpdump -r tun0.tcpdump
-  tcpdump -r vpeer1.tcpdump
-  tcpdump -r vpeer2.tcpdump
-  tcpdump -r veth1.tcpdump
-  tcpdump -r veth2.tcpdump
+  tcpdump -v -r tun0.tcpdump
+  tcpdump -v -r vpeer1.tcpdump
+  tcpdump -v -r vpeer2.tcpdump
+  tcpdump -v -r veth1.tcpdump
+  tcpdump -v -r veth2.tcpdump
 fi
 
