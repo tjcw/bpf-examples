@@ -10,5 +10,5 @@ for device in /proc/sys/net/ipv4/conf/*
 do
   echo 0 >${device}/rp_filter
 done
-cd ..
+cd ../..
 ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./af_xdp_kern.o

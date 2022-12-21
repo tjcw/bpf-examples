@@ -19,7 +19,7 @@ then
   do
     echo 0 >${device}/rp_filter
   done
-  cd ..
+  cd ../..
   ./af_xdp_user -S -d enp25s0 -Q 1 --filename ./${FILTER}.o &
   real_pid=$!
   netserver -p 50000 -4 -D -f &

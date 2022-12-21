@@ -58,10 +58,10 @@ fi
     do
       echo 0 >${device}/rp_filter
     done
-#    ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -a ${ns2_pid} -r vpeer2 &
+#    ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -a ${ns2_pid} -r vpeer2 &
     destination_mac=$(ip a s dev br0|awk '{ if($1 == "link/ether") { print $2 } }')
     source_mac=$(ip a s dev br0veth2|awk '{ if($1 == "link/ether") { print $2 } }')
-    DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../af_xdp_user -S -d veth1 -Q 1 --filename ../${FILTER}.o -a 1 -r br0 &
+    DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -a 1 -r br0 &
     af_pid=$!
     sleep 2
     ../filter-xdp_stats &

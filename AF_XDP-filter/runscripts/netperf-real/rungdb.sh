@@ -27,7 +27,7 @@ then
   do
     echo 0 >${device}/rp_filter
   done
-  cd ..
+  cd ../..
   ulimit -c unlimited
   ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
   real_pid=$!
