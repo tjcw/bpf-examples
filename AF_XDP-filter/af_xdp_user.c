@@ -62,9 +62,9 @@
 const char *pin_basedir = "/sys/fs/bpf";
 
 enum {
-	k_instrument = true, // Whether to display trace
+	k_instrument = false, // Whether to display trace
 	k_instrument_detail = false, // Whether to display detailed trace
-	k_receive_tuntap = true, // Whether to write packets to a tun interface
+	k_receive_tuntap = true, // Whether to receive on the tun/tap interface
 	k_verify_umem = false, // Whether to check umem usage
 	k_verbose = false, // Whether to give verbose output
 	k_timestamp = false, // Whether to put timestamps on trace output
@@ -978,8 +978,10 @@ static void *tun_read(void *arg)
 			fprintf(stderr,
 				"tun_read unexpected zero length read\n");
 		} else {
-			fprintf(stderr, "tun_read\n");
-			hexdump(stderr, buffer, count);
+			if(k_instrument) {
+				fprintf(stderr, "tun_read\n");
+				hexdump(stderr, buffer, count);
+			}
 		}
 	}
 	return NULL;
