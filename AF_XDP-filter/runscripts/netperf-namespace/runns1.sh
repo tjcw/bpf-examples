@@ -13,6 +13,7 @@ then
   tcpdump -v -i vpeer1 -w vpeer1.tcpdump &
   tcpdump_vpeer1_pid=$!
 fi
+ethtool -K vpeer1 tx off
 sleep 6
 if [[ -n "${TCP_RR}" ]]
 then
