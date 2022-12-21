@@ -1,4 +1,5 @@
 #!/bin/bash -x
+ulimit -c unlimited
 (
   cd netperf-real
   echo "netperf-real"
