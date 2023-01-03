@@ -119,7 +119,7 @@ struct all_socket_info {
 };
 
 struct tx_socket_info {
-	struct xsk_socket_info socket_info;
+	struct xsk_socket_info *socket_info;
 	unsigned char src_mac[ETH_ALEN];
 	unsigned char dst_mac[ETH_ALEN];
 };
@@ -336,7 +336,7 @@ xsk_configure_socket(struct config *cfg, int xsks_map_fd, int if_queue,
 					&xsk_info->txq, &(xsk_info->umem_fq),
 					&(xsk_info->umem_cq), &xsk_cfg);
 
-	printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
+	printf("xsk_socket__create_shared returns %d\n", ret);
 	if (ret)
 		goto error_exit;
 	if (xsks_map_fd != -1) {
@@ -402,7 +402,6 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
 {
 	struct tx_socket_info *tx_info =
 		calloc(1, sizeof(struct tx_socket_info));
-	tx_info->socket_info.outstanding_tx = 0;
 
 	struct xsk_socket_config xsk_cfg;
 	int ret;
@@ -410,6 +409,8 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
 	if ( tx_to_rx_socket) {
 		tx_info->socket_info = rx_socket ;
 	} else {
+		tx_info->socket_info = calloc(1, sizeof(struct xsk_socket_info)) ;
+		tx_info->socket_info->outstanding_tx = 0;
 		xsk_cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
 		xsk_cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
 		xsk_cfg.libbpf_flags = 0;
@@ -417,12 +418,12 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
 		xsk_cfg.bind_flags = cfg->xsk_bind_flags;
 		xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
 		ret = xsk_socket__create_shared(
-			&tx_info->socket_info.xsk, cfg->redirect_ifname, 0, umem,
-			&tx_info->socket_info.rxq, &tx_info->socket_info.txq,
-			&tx_info->socket_info.umem_fq, &tx_info->socket_info.umem_cq,
+			&tx_info->socket_info->xsk, cfg->redirect_ifname, 0, umem,
+			&tx_info->socket_info->rxq, &tx_info->socket_info->txq,
+			&tx_info->socket_info->umem_fq, &tx_info->socket_info->umem_cq,
 			&xsk_cfg);
 
-		printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
+		printf("xsk_socket__create_shared returns %d\n", ret);
 		if (ret)
 			goto error_exit;
 	}
@@ -738,16 +739,16 @@ static void complete_tx(struct tx_socket_info *xsk_tx,
 	uint32_t idx_cq;
 	if (k_instrument) {
 		fprintf(stderr, "complete_tx entry, outstanding_tx=%d\n",
-			xsk_tx->socket_info.outstanding_tx);
+			xsk_tx->socket_info->outstanding_tx);
 	}
-	if (!xsk_tx->socket_info.outstanding_tx)
+	if (!xsk_tx->socket_info->outstanding_tx)
 		return;
 
 	sendto(xsk_socket__fd(xsk_tx->socket_info.xsk), NULL, 0, MSG_DONTWAIT,
 	       NULL, 0);
 
 	/* Collect/free completed TX buffers */
-	completed = xsk_ring_cons__peek(&xsk_tx->socket_info.umem_cq,
+	completed = xsk_ring_cons__peek(&xsk_tx->socket_info->umem_cq,
 					XSK_RING_CONS__DEFAULT_NUM_DESCS,
 					&idx_cq);
 
@@ -764,19 +765,19 @@ static void complete_tx(struct tx_socket_info *xsk_tx,
 			}
 			umem_free_umem_frame(
 				umem, *xsk_ring_cons__comp_addr(
-					      &xsk_tx->socket_info.umem_cq,
+					      &xsk_tx->socket_info->umem_cq,
 					      idx_cq++));
 		}
 
-		xsk_ring_cons__release(&xsk_tx->socket_info.umem_cq, completed);
-		xsk_tx->socket_info.outstanding_tx -=
-			completed < xsk_tx->socket_info.outstanding_tx ?
+		xsk_ring_cons__release(&xsk_tx->socket_info->umem_cq, completed);
+		xsk_tx->socket_info->outstanding_tx -=
+			completed < xsk_tx->socket_info->outstanding_tx ?
 				completed :
-				xsk_tx->socket_info.outstanding_tx;
+				xsk_tx->socket_info->outstanding_tx;
 	}
 	if (k_instrument) {
 		fprintf(stderr, "complete_tx exit, outstanding_tx=%d\n",
-			xsk_tx->socket_info.outstanding_tx);
+			xsk_tx->socket_info->outstanding_tx);
 	}
 }
 
