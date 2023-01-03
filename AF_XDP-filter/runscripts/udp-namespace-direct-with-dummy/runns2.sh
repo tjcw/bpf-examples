@@ -14,7 +14,7 @@ then
   tcpdump_vpeer2_pid=$!
 fi
 
-../udp-receiver 50000 2 &
+../../udp-receiver 50000 2 &
 udp_receiver_pid=$!
 sleep 20
 kill ${udp_receiver_pid}
