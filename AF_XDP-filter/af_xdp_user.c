@@ -397,7 +397,8 @@ xsk_configure_socket_all(struct config *cfg, int xsks_map_fd,
 }
 
 static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
-						      struct xsk_umem *umem)
+						      struct xsk_umem *umem, bool tx_to_rx_socket,
+							  struct xsk_socket_info *rx_socket)
 {
 	struct tx_socket_info *tx_info =
 		calloc(1, sizeof(struct tx_socket_info));
@@ -406,21 +407,25 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
 	struct xsk_socket_config xsk_cfg;
 	int ret;
 
-	xsk_cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
-	xsk_cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
-	xsk_cfg.libbpf_flags = 0;
-	xsk_cfg.xdp_flags = cfg->xdp_flags;
-	xsk_cfg.bind_flags = cfg->xsk_bind_flags;
-	xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
-	ret = xsk_socket__create_shared(
-		&tx_info->socket_info.xsk, cfg->redirect_ifname, 0, umem,
-		&tx_info->socket_info.rxq, &tx_info->socket_info.txq,
-		&tx_info->socket_info.umem_fq, &tx_info->socket_info.umem_cq,
-		&xsk_cfg);
+	if ( tx_to_rx_socket) {
+		tx_info->socket_info = rx_socket ;
+	} else {
+		xsk_cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
+		xsk_cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
+		xsk_cfg.libbpf_flags = 0;
+		xsk_cfg.xdp_flags = cfg->xdp_flags;
+		xsk_cfg.bind_flags = cfg->xsk_bind_flags;
+		xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
+		ret = xsk_socket__create_shared(
+			&tx_info->socket_info.xsk, cfg->redirect_ifname, 0, umem,
+			&tx_info->socket_info.rxq, &tx_info->socket_info.txq,
+			&tx_info->socket_info.umem_fq, &tx_info->socket_info.umem_cq,
+			&xsk_cfg);
 
-	printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
-	if (ret)
-		goto error_exit;
+		printf("xsk_socket__create_shared_named_prog returns %d\n", ret);
+		if (ret)
+			goto error_exit;
+	}
 
 	return tx_info;
 
@@ -1100,6 +1105,7 @@ int main(int argc, char **argv)
 
 	int accept_map_fd;
 	struct tx_socket_info *tx_socket_info;
+	bool tx_to_rx_socket ;
 
 	memset(&stats, 0, sizeof(stats));
 
@@ -1108,6 +1114,8 @@ int main(int argc, char **argv)
 
 	/* Cmdline options can change progsec */
 	parse_cmdline_args(argc, argv, long_options, &cfg, __doc__);
+
+	tx_to_rx_socket = ( strcmp(cfg.ifname, cfg.redirect_ifname) ==  0) ;
 
 	/* Required option */
 	if (cfg.ifindex == -1) {
@@ -1274,7 +1282,8 @@ int main(int argc, char **argv)
 					rc, errno);
 			}
 		}
-		tx_socket_info = xsk_configure_socket_tx(&cfg, umem_info.umem);
+		tx_socket_info = xsk_configure_socket_tx(&cfg, umem_info.umem,
+				tx_to_rx_socket, all_socket_info->xsk_socket_info[0]);
 		if (tx_socket_info == NULL) {
 			fprintf(stderr,
 				"ERROR: Failed calling xsk_configure_socket_tx "
