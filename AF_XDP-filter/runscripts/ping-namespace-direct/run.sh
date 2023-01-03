@@ -64,7 +64,7 @@ fi
     DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -a 1 -r br0 &
     af_pid=$!
     sleep 2
-    ../filter-xdp_stats &
+    ../../filter-xdp_stats &
     filter_pid=$!
     sleep 120
     kill -TERM ${af_pid} ${filter_pid}
