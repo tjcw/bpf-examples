@@ -637,14 +637,14 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					       ETH_ALEN);
 				}
 				xsk_ring_prod__tx_desc(
-					&(xsk_tx->socket_info.txq), tx_idx)
+					&(xsk_tx->socket_info->txq), tx_idx)
 					->addr = tx_addr;
 				xsk_ring_prod__tx_desc(
-					&(xsk_tx->socket_info.txq), tx_idx)
+					&(xsk_tx->socket_info->txq), tx_idx)
 					->len = len;
 				xsk_ring_prod__submit(
-					&(xsk_tx->socket_info.txq), 1);
-				xsk_tx->socket_info.outstanding_tx++;
+					&(xsk_tx->socket_info->txq), 1);
+				xsk_tx->socket_info->outstanding_tx++;
 
 				stats->stats.tx_bytes += len;
 				stats->stats.tx_packets += 1;
@@ -666,7 +666,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					struct ethhdr *tx_eth =
 						(struct ethhdr *)tx_pkt;
 					ssize_t ret = xsk_ring_prod__reserve(
-						&(xsk_tx->socket_info.txq), 1,
+						&(xsk_tx->socket_info->txq), 1,
 						&tx_idx);
 					if (k_instrument) {
 						hexdump(stderr, write_addr,
@@ -708,16 +708,16 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					}
 
 					xsk_ring_prod__tx_desc(
-						&(xsk_tx->socket_info.txq),
+						&(xsk_tx->socket_info->txq),
 						tx_idx)
 						->addr = tx_addr;
 					xsk_ring_prod__tx_desc(
-						&(xsk_tx->socket_info.txq),
+						&(xsk_tx->socket_info->txq),
 						tx_idx)
 						->len = len;
 					xsk_ring_prod__submit(
-						&(xsk_tx->socket_info.txq), 1);
-					xsk_tx->socket_info.outstanding_tx++;
+						&(xsk_tx->socket_info->txq), 1);
+					xsk_tx->socket_info->outstanding_tx++;
 
 					stats->stats.tx_bytes += len;
 					stats->stats.tx_packets += 1;
@@ -744,7 +744,7 @@ static void complete_tx(struct tx_socket_info *xsk_tx,
 	if (!xsk_tx->socket_info->outstanding_tx)
 		return;
 
-	sendto(xsk_socket__fd(xsk_tx->socket_info.xsk), NULL, 0, MSG_DONTWAIT,
+	sendto(xsk_socket__fd(xsk_tx->socket_info->xsk), NULL, 0, MSG_DONTWAIT,
 	       NULL, 0);
 
 	/* Collect/free completed TX buffers */
