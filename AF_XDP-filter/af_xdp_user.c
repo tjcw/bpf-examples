@@ -1116,7 +1116,7 @@ int main(int argc, char **argv)
 	/* Cmdline options can change progsec */
 	parse_cmdline_args(argc, argv, long_options, &cfg, __doc__);
 
-	tx_to_rx_socket = ( strcmp(cfg.ifname, cfg.redirect_ifname) ==  0) ;
+	tx_to_rx_socket = (cfg.redirect_ifname != NULL) && ( strcmp(cfg.ifname, cfg.redirect_ifname) ==  0) ;
 
 	/* Required option */
 	if (cfg.ifindex == -1) {
