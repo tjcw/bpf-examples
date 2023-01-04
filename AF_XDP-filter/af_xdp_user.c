@@ -607,7 +607,8 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 			fprintf(stderr, "Incoming checksum=0x%04x should be 0x%04x\n",
 					ip->check, h_checksum) ;
 			unsigned int * ipu = (unsigned int *) ip;
-			for(int i=0; i<ip->ihl; i+=1)
+			int l = ( ip->ihl < 5 ) ? 5 : ip->ihl;
+			for(int i=0; i<l; i+=1)
 				fprintf(stderr, "ipu[%d]=0x%08x\n", i, ipu[i]) ;
 		}
 		if (k_timestamp) {
@@ -682,6 +683,14 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						umem_info->umem,
 						xsk_tx->socket_info->xsk->ctx->umem
 						) ;
+				uint8_t *tx_pkt = xsk_umem__get_data(
+					umem_info->buffer, tx_addr);
+				struct iphdr *tx_ip = ( struct iphdr *) (tx_pkt + sizeof(struct ethhdr));
+				unsigned int * tx_ipu = (unsigned int *) tx_ip;
+				int l = ( tx_ip->ihl < 5 ) ? 5 : tx_ip->ihl;
+				for(int i=0; i<l; i+=1)
+					fprintf(stderr, "tx_ipu[%d]=0x%08x\n", i, tx_ipu[i]) ;
+
 				if (k_instrument) {
 					hexdump(stderr, write_addr,
 						(write_len < 32) ? write_len :
