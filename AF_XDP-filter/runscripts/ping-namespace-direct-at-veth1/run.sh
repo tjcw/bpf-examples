@@ -67,14 +67,15 @@ fi
     DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r veth1 -a 1 &
     af_pid=$!
     sleep 2
-    ../../af_xdp_user_dummy -S -d veth2 -Q 1 --filename ../../af_xdp_kern_dummy.o &
-    af_pid_dummy=$!
-    sleep 2
+#    ../../af_xdp_user_dummy -S -d veth2 -Q 1 --filename ../../af_xdp_kern_dummy.o &
+#    af_pid_dummy=$!
+#    sleep 2
     ../../filter-xdp_stats &
     filter_pid=$!
-    sleep 120
+    sleep 30
     iptables -F INPUT
-    kill -INT ${af_pid} ${af_pid_dummy}
+    kill -INT ${af_pid} 
+#    kill -INT ${af_pid_dummy}
     kill -TERM ${filter_pid}
   fi 
   wait

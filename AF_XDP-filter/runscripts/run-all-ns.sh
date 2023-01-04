@@ -43,7 +43,7 @@ ulimit -c unlimited
   FILTER=af_xdp_kern ./run.sh
 )
 (
-  cd ping-namespace-direct-with-dummy-at-veth1
+  cd ping-namespace-direct-at-veth1
   FILTER=af_xdp_kern ./run.sh
 )
 (
