@@ -678,10 +678,14 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 			} else if (k_share_rxtx_umem) {
 				uint64_t tx_addr = addr;
 				struct ethhdr *tx_eth = eth;
+				ssize_t ret = xsk_ring_prod__reserve(
+					&(xsk_tx->socket_info->txq), 1,
+					&tx_idx);
 
-				fprintf(stderr, "rx_umem=%p tx_umem=%p\n",
+				fprintf(stderr, "rx_umem=%p tx_umem=%p tx_idx=0x%08x\n",
 						umem_info->umem,
-						xsk_tx->socket_info->xsk->ctx->umem
+						xsk_tx->socket_info->xsk->ctx->umem,
+						tx_idx
 						) ;
 				uint8_t *tx_pkt = xsk_umem__get_data(
 					umem_info->buffer, tx_addr);
