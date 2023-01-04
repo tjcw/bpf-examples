@@ -39,11 +39,11 @@ iptables -F FORWARD
 
 if [[ -n "${TCPDUMP}" ]]
 then
-  tcpdump -i veth1 -w veth1.tcpdump not ip6 &
+  tcpdump -v -i veth1 -w veth1.tcpdump not ip6 &
   tcpdump_veth1_pid=$!
-  tcpdump -i veth2 -w veth2.tcpdump not ip6 &
+  tcpdump -v -i veth2 -w veth2.tcpdump not ip6 &
   tcpdump_veth2_pid=$!
-  tcpdump -i br0 -w br0.tcpdump not ip6 &
+  tcpdump -v -i br0 -w br0.tcpdump not ip6 &
   tcpdump_br0_pid=$!
   sleep 2
 fi
@@ -85,10 +85,10 @@ then
   kill -INT ${tcpdump_veth1_pid} ${tcpdump_veth2_pid} ${tcpdump_br0_pid}
   wait
   chown root.root vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump br0.tcpdump
-  tcpdump -r veth1.tcpdump
-  tcpdump -r veth2.tcpdump
-  tcpdump -r vpeer1.tcpdump
-  tcpdump -r vpeer2.tcpdump
-  tcpdump -r br0.tcpdump
+  tcpdump -v -r veth1.tcpdump
+  tcpdump -v -r veth2.tcpdump
+  tcpdump -v -r vpeer1.tcpdump
+  tcpdump -v -r vpeer2.tcpdump
+  tcpdump -v -r br0.tcpdump
 fi
-
+dmesg
