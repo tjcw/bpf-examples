@@ -76,9 +76,9 @@ struct xsk_ctx {
 	int ifindex;
 	__u64 netns_cookie;
 	int xsks_map_fd;
-	struct list_head list;
-	struct xdp_program *xdp_prog;
-	char ifname[IFNAMSIZ];
+//	struct list_head list;
+//	struct xdp_program *xdp_prog;
+//	char ifname[IFNAMSIZ];
 };
 
 // End temporary copy in
