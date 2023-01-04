@@ -58,7 +58,30 @@
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
+// Structures temporarily copied in from xsk.c for diagnosis
+struct xsk_socket {
+	struct xsk_ring_cons *rx;
+	struct xsk_ring_prod *tx;
+	struct xsk_ctx *ctx;
+//	struct xsk_socket_config config;
+//	int fd;
+};
 
+struct xsk_ctx {
+	struct xsk_ring_prod *fill;
+	struct xsk_ring_cons *comp;
+	struct xsk_umem *umem;
+	__u32 queue_id;
+	int refcount;
+	int ifindex;
+	__u64 netns_cookie;
+	int xsks_map_fd;
+	struct list_head list;
+	struct xdp_program *xdp_prog;
+	char ifname[IFNAMSIZ];
+};
+
+// End temporary copy in
 const char *pin_basedir = "/sys/fs/bpf";
 
 enum {
@@ -570,7 +593,6 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 	uint8_t *pkt = xsk_umem__get_data(umem_info->buffer, addr);
 	bool pass = false;
 	uint32_t tx_idx = 0;
-
 	struct ethhdr *eth = (struct ethhdr *)pkt;
 	struct iphdr *ip = (struct iphdr *)(eth + 1);
 	if (ntohs(eth->h_proto) == ETH_P_IP &&
@@ -656,6 +678,10 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				uint64_t tx_addr = addr;
 				struct ethhdr *tx_eth = eth;
 
+				fprintf(stderr, "rx_umem=%p tx_umem=%p\n",
+						umem_info->umem,
+						xsk_tx->socket_info->xsk->ctx->umem
+						) ;
 				if (k_instrument) {
 					hexdump(stderr, write_addr,
 						(write_len < 32) ? write_len :
