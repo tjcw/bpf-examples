@@ -682,6 +682,10 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					&(xsk_tx->socket_info->txq), 1,
 					&tx_idx);
 
+				if (ret != 1) {
+					/* No more transmit slots, drop the packet */
+					return false;
+				}
 				fprintf(stderr, "rx_umem=%p tx_umem=%p tx_idx=0x%08x\n",
 						umem_info->umem,
 						xsk_tx->socket_info->xsk->ctx->umem,
