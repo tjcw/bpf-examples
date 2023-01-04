@@ -584,6 +584,9 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 			int h_checksum = compute_iph_checksum(ip) ;
 			fprintf(stderr, "Incoming checksum=0x%04x should be 0x%04x\n",
 					ip->check, h_checksum) ;
+			unsigned int * ipu = (unsigned int *) ip;
+			for(int i=0; i<ip->ihl; i+=1)
+				fprintf(stderr, "ipu[%d]=0x%08x\n", i, ipu[i]) ;
 		}
 		if (k_timestamp) {
 			struct timeval tv;
