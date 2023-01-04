@@ -95,7 +95,7 @@ enum {
 	k_show_iph_checksum = true , // Whether to display IP header checksum
 	k_diagnose_setns = false, // Whether to trace setns processing
 	k_share_rxtx_umem =
-		true, // Whether to share receive and transmit buffers
+		false, // Whether to share receive and transmit buffers
 	k_rewrite_mac_addresses =
 		false // Whether to rewrite the source and destinationMAC addresses
 };
