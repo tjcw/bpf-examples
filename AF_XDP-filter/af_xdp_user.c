@@ -69,6 +69,7 @@ enum {
 	k_verbose = false, // Whether to give verbose output
 	k_timestamp = false, // Whether to put timestamps on trace output
 	k_showpacket = false, // Whether to display packet contents
+	k_show_iph_checksum = true , // Whether to display IP header checksum
 	k_diagnose_setns = false, // Whether to trace setns processing
 	k_share_rxtx_umem =
 		true, // Whether to share receive and transmit buffers
@@ -234,6 +235,45 @@ static void show_mac(unsigned char macaddr[ETH_ALEN])
 
 static bool global_exit;
 
+uint16_t iph_checksum(void* vdata,size_t length) {
+    // Cast the data pointer to one that can be indexed.
+    char* data=(char*)vdata;
+
+    // Initialise the accumulator.
+    uint32_t acc=0xffff;
+
+    // Handle complete 16-bit blocks.
+    for (size_t i=0;i+1<length;i+=2) {
+        uint16_t word;
+        memcpy(&word,data+i,2);
+        acc+=ntohs(word);
+        if (acc>0xffff) {
+            acc-=0xffff;
+        }
+    }
+
+    // Handle any partial block at the end of the data.
+    if (length&1) {
+        uint16_t word=0;
+        memcpy(&word,data+length-1,1);
+        acc+=ntohs(word);
+        if (acc>0xffff) {
+            acc-=0xffff;
+        }
+    }
+
+    // Return the checksum in network byte order.
+    return htons(~acc);
+}
+
+static unsigned short compute_iph_checksum (struct iphdr *iph)
+{
+	unsigned short saved_checksum=iph->check ;
+	iph->check = 0 ;
+	unsigned short new_checksum = iph_checksum((unsigned short *)iph, 4*iph->ihl) ;
+	iph->check = saved_checksum ;
+	return new_checksum ;
+}
 static struct xsk_umem_info *configure_xsk_umem(struct xsk_umem_info *umem,
 						void *buffer, uint64_t size,
 						struct xsk_ring_prod *fq,
@@ -540,6 +580,11 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 		__u32 daddr = ntohl(ip->daddr);
 		if (k_showpacket)
 			hexdump(stderr, ip, (len < 32) ? len : 32);
+		if ( k_show_iph_checksum) {
+			int h_checksum = compute_iph_checksum(ip) ;
+			fprintf(stderr, "Incoming checksum=0x%04x should be 0x%04x\n",
+					ip->check, h_checksum) ;
+		}
 		if (k_timestamp) {
 			struct timeval tv;
 			gettimeofday(&tv, NULL);
