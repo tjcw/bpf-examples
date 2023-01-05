@@ -73,7 +73,7 @@ fi
     ../../filter-xdp_stats &
     filter_pid=$!
     xterm -e gdb --pid=${af_pid}
-    sleep 1200
+    sleep 600
     iptables -F INPUT
     kill -INT ${af_pid} ${af_pid_dummy}
     kill -TERM ${filter_pid}

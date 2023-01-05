@@ -73,7 +73,7 @@ fi
     sleep 2
     ../../filter-xdp_stats &
     filter_pid=$!
-    sleep 120
+    sleep 60
     iptables -F INPUT
     kill -INT ${af_pid} ${af_pid_dummy}
     kill -TERM ${filter_pid}

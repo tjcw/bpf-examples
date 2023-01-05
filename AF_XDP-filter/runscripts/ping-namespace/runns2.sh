@@ -34,10 +34,10 @@ fi
     sleep 2
     ./filter-xdp_stats &
     filter_pid=$!
-    sleep 120
+    sleep 60
     kill -TERM ${ns2_pid} ${filter_pid}
   else
-    sleep 120
+    sleep 60
   fi 
   wait
 )
