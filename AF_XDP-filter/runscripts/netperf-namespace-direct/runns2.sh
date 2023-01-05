@@ -17,7 +17,7 @@ fi
 
 netserver -p ${PORT} -4 -D -f &
 netserver_pid=$!
-sleep 30
+sleep 120
 kill -INT ${netserver_pid}  
 wait
 if [[ -n "${TCPDUMP}" ]]

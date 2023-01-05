@@ -14,7 +14,7 @@ then
   tcpdump_vpeer2_pid=$!
 fi
 
-sleep 30
+sleep 120
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_vpeer2_pid}
