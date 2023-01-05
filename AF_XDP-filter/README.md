@@ -45,17 +45,17 @@ ARP to work.
 
 To check out this code and verify that something runs, run these commands. Note that running the testcase requires root privileges.
 ```
-      mkdir workspace
-      cd workspace
-      git clone git@github.com:tjcw/bpf-examples.git
-      cd bpf-examples
-      git checkout tjcw-integration-1.2
-      git submodule update --init
-      cd bpf-examples
-      cd AF_XDP-filter
-      make
-      cd netperf-namespace 
-      sudo FILTER=af_xdp_kern PORT=50000 ./run.sh 2>&1|tee logfile.txt
+mkdir workspace
+cd workspace
+git clone git@github.com:tjcw/bpf-examples.git
+cd bpf-examples
+git checkout tjcw-integration-1.3
+git submodule update --init
+cd bpf-examples
+cd AF_XDP-filter
+make
+cd netperf-namespace 
+sudo FILTER=af_xdp_kern PORT=50000 ./run.sh 2>&1|tee logfile.txt
 ```
 
 
@@ -73,6 +73,6 @@ There are a number of  directories which contain run scripts
 -      iperf3-namespace/run.sh -- run iperf3 between 2 namespaces
 -      iperf3-real/run.sh  -- run iperf3 between 2 real machines with 16-channel NICs
 -      netperf-namespace/run.sh  -- run netperf between 2 namespaces
--      netperf3-real/run.sh -- run netperf between 2 real machines
--      netperf3-vm/run.sh -- run netperf between 2 real machines
+-      netperf-real/run.sh -- run netperf between 2 real machines
+-      netperf-vm/run.sh -- run netperf between 2 real machines
     
