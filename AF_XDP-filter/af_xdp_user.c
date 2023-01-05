@@ -58,13 +58,19 @@
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
-// Structures temporarily copied in from xsk.c for diagnosis
+
+#define VERIFY_UMEM 0
+
+#if VERIFY_UMEM
+// Internals of xsk.c copied here for diagnosis
 struct xsk_socket {
 	struct xsk_ring_cons *rx;
 	struct xsk_ring_prod *tx;
 	struct xsk_ctx *ctx;
-//	struct xsk_socket_config config;
-//	int fd;
+#if 0
+	struct xsk_socket_config config;
+	int fd;
+#endif
 };
 
 struct xsk_ctx {
@@ -76,12 +82,15 @@ struct xsk_ctx {
 	int ifindex;
 	__u64 netns_cookie;
 	int xsks_map_fd;
-//	struct list_head list;
-//	struct xdp_program *xdp_prog;
-//	char ifname[IFNAMSIZ];
+#if 0
+	struct list_head list;
+	struct xdp_program *xdp_prog;
+	char ifname[IFNAMSIZ];
+#endif
 };
 
-// End temporary copy in
+// End of internals from xsk.c
+#endif
 const char *pin_basedir = "/sys/fs/bpf";
 
 enum {
@@ -92,7 +101,7 @@ enum {
 	k_verbose = false, // Whether to give verbose output
 	k_timestamp = false, // Whether to put timestamps on trace output
 	k_showpacket = false, // Whether to display packet contents
-	k_show_iph_checksum = true , // Whether to display IP header checksum
+	k_show_iph_checksum = false , // Whether to display IP header checksum
 	k_diagnose_setns = false, // Whether to trace setns processing
 	k_share_rxtx_umem =
 		true, // Whether to share receive and transmit buffers
@@ -686,11 +695,13 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					/* No more transmit slots, drop the packet */
 					return false;
 				}
+#if VERIFY_UMEM
 				fprintf(stderr, "rx_umem=%p tx_umem=%p tx_idx=0x%08x\n",
 						umem_info->umem,
 						xsk_tx->socket_info->xsk->ctx->umem,
 						tx_idx
 						) ;
+#endif
 				uint8_t *tx_pkt = xsk_umem__get_data(
 					umem_info->buffer, tx_addr);
 				struct iphdr *tx_ip = ( struct iphdr *) (tx_pkt + sizeof(struct ethhdr));
