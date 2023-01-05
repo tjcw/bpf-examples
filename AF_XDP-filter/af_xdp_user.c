@@ -101,7 +101,7 @@ enum {
 	k_verbose = false, // Whether to give verbose output
 	k_timestamp = false, // Whether to put timestamps on trace output
 	k_showpacket = false, // Whether to display packet contents
-	k_show_iph_checksum = false , // Whether to display IP header checksum
+	k_show_iph_checksum = false, // Whether to display IP header checksum
 	k_diagnose_setns = false, // Whether to trace setns processing
 	k_share_rxtx_umem =
 		true, // Whether to share receive and transmit buffers
@@ -119,7 +119,7 @@ struct xsk_umem_info {
 	uint64_t free_count;
 	char *mark_buffer;
 	uint64_t umem_frame_count;
-	uint64_t umem_frame_addr[NUM_FRAMES * 2 * (IF_QUEUE_MAX+1)];
+	uint64_t umem_frame_addr[NUM_FRAMES * 2 * (IF_QUEUE_MAX + 1)];
 };
 
 struct stats_record {
@@ -267,54 +267,56 @@ static void show_mac(unsigned char macaddr[ETH_ALEN])
 
 static bool global_exit;
 
-uint16_t iph_checksum(void* vdata,size_t length) {
-    // Cast the data pointer to one that can be indexed.
-    char* data=(char*)vdata;
+uint16_t iph_checksum(void *vdata, size_t length)
+{
+	// Cast the data pointer to one that can be indexed.
+	char *data = (char *)vdata;
 
-    // Initialise the accumulator.
-    uint32_t acc=0xffff;
+	// Initialise the accumulator.
+	uint32_t acc = 0xffff;
 
-    // Handle complete 16-bit blocks.
-    for (size_t i=0;i+1<length;i+=2) {
-        uint16_t word;
-        memcpy(&word,data+i,2);
-        acc+=ntohs(word);
-        if (acc>0xffff) {
-            acc-=0xffff;
-        }
-    }
+	// Handle complete 16-bit blocks.
+	for (size_t i = 0; i + 1 < length; i += 2) {
+		uint16_t word;
+		memcpy(&word, data + i, 2);
+		acc += ntohs(word);
+		if (acc > 0xffff) {
+			acc -= 0xffff;
+		}
+	}
 
-    // Handle any partial block at the end of the data.
-    if (length&1) {
-        uint16_t word=0;
-        memcpy(&word,data+length-1,1);
-        acc+=ntohs(word);
-        if (acc>0xffff) {
-            acc-=0xffff;
-        }
-    }
+	// Handle any partial block at the end of the data.
+	if (length & 1) {
+		uint16_t word = 0;
+		memcpy(&word, data + length - 1, 1);
+		acc += ntohs(word);
+		if (acc > 0xffff) {
+			acc -= 0xffff;
+		}
+	}
 
-    // Return the checksum in network byte order.
-    return htons(~acc);
+	// Return the checksum in network byte order.
+	return htons(~acc);
 }
 
-static unsigned short compute_iph_checksum (struct iphdr *iph)
+static unsigned short compute_iph_checksum(struct iphdr *iph)
 {
-	unsigned short saved_checksum=iph->check ;
-	iph->check = 0 ;
-	unsigned short new_checksum = iph_checksum((unsigned short *)iph, 4*iph->ihl) ;
-	iph->check = saved_checksum ;
-	return new_checksum ;
+	unsigned short saved_checksum = iph->check;
+	iph->check = 0;
+	unsigned short new_checksum =
+		iph_checksum((unsigned short *)iph, 4 * iph->ihl);
+	iph->check = saved_checksum;
+	return new_checksum;
 }
 static struct xsk_umem_info *configure_xsk_umem(struct xsk_umem_info *umem,
 						void *buffer, uint64_t size,
 						struct xsk_ring_prod *fq,
 						struct xsk_ring_cons *cq,
-						unsigned long frame_count )
+						unsigned long frame_count)
 {
 	int ret;
 	unsigned long i;
-	umem->umem_frame_count = frame_count ;
+	umem->umem_frame_count = frame_count;
 
 	ret = xsk_umem__create(&umem->umem, buffer, size, fq, cq, NULL);
 	if (ret) {
@@ -468,9 +470,9 @@ xsk_configure_socket_all(struct config *cfg, int xsks_map_fd,
 	return xsk_info_all;
 }
 
-static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
-						      struct xsk_umem *umem, bool tx_to_rx_socket,
-							  struct xsk_socket_info *rx_socket)
+static struct tx_socket_info *
+xsk_configure_socket_tx(struct config *cfg, struct xsk_umem *umem,
+			bool tx_to_rx_socket, struct xsk_socket_info *rx_socket)
 {
 	struct tx_socket_info *tx_info =
 		calloc(1, sizeof(struct tx_socket_info));
@@ -478,10 +480,11 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
 	struct xsk_socket_config xsk_cfg;
 	int ret;
 
-	if ( tx_to_rx_socket) {
-		tx_info->socket_info = rx_socket ;
+	if (tx_to_rx_socket) {
+		tx_info->socket_info = rx_socket;
 	} else {
-		tx_info->socket_info = calloc(1, sizeof(struct xsk_socket_info)) ;
+		tx_info->socket_info =
+			calloc(1, sizeof(struct xsk_socket_info));
 		tx_info->socket_info->outstanding_tx = 0;
 		xsk_cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
 		xsk_cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
@@ -489,11 +492,13 @@ static struct tx_socket_info *xsk_configure_socket_tx(struct config *cfg,
 		xsk_cfg.xdp_flags = cfg->xdp_flags;
 		xsk_cfg.bind_flags = cfg->xsk_bind_flags;
 		xsk_cfg.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD;
-		ret = xsk_socket__create_shared(
-			&tx_info->socket_info->xsk, cfg->redirect_ifname, 0, umem,
-			&tx_info->socket_info->rxq, &tx_info->socket_info->txq,
-			&tx_info->socket_info->umem_fq, &tx_info->socket_info->umem_cq,
-			&xsk_cfg);
+		ret = xsk_socket__create_shared(&tx_info->socket_info->xsk,
+						cfg->redirect_ifname, 0, umem,
+						&tx_info->socket_info->rxq,
+						&tx_info->socket_info->txq,
+						&tx_info->socket_info->umem_fq,
+						&tx_info->socket_info->umem_cq,
+						&xsk_cfg);
 
 		printf("xsk_socket__create_shared returns %d\n", ret);
 		if (ret)
@@ -611,14 +616,15 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 		__u32 daddr = ntohl(ip->daddr);
 		if (k_showpacket)
 			hexdump(stderr, ip, (len < 32) ? len : 32);
-		if ( k_show_iph_checksum) {
-			int h_checksum = compute_iph_checksum(ip) ;
-			fprintf(stderr, "Incoming checksum=0x%04x should be 0x%04x\n",
-					ip->check, h_checksum) ;
-			unsigned int * ipu = (unsigned int *) ip;
-			int l = ( ip->ihl < 5 ) ? 5 : ip->ihl;
-			for(int i=0; i<l; i+=1)
-				fprintf(stderr, "ipu[%d]=0x%08x\n", i, ipu[i]) ;
+		if (k_show_iph_checksum) {
+			int h_checksum = compute_iph_checksum(ip);
+			fprintf(stderr,
+				"Incoming checksum=0x%04x should be 0x%04x\n",
+				ip->check, h_checksum);
+			unsigned int *ipu = (unsigned int *)ip;
+			int l = (ip->ihl < 5) ? 5 : ip->ihl;
+			for (int i = 0; i < l; i += 1)
+				fprintf(stderr, "ipu[%d]=0x%08x\n", i, ipu[i]);
 		}
 		if (k_timestamp) {
 			struct timeval tv;
@@ -667,11 +673,11 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				ssize_t ret =
 					write(tun_fd, write_addr, write_len);
 				if (k_instrument) {
-					fprintf(stderr, "Written to tun\n") ;
+					fprintf(stderr, "Written to tun\n");
 					hexdump(stderr, write_addr,
 						(write_len < 32) ? write_len :
 								   32);
-					int tlen=ntohs(ip->tot_len);
+					int tlen = ntohs(ip->tot_len);
 					fprintf(stderr,
 						"Write length %lu actual %ld tlen=%d\n",
 						write_len, ret, tlen);
@@ -683,7 +689,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 						strerror(errno));
 					exit(EXIT_FAILURE);
 				}
-				return false ;
+				return false;
 			} else if (k_share_rxtx_umem) {
 				uint64_t tx_addr = addr;
 				struct ethhdr *tx_eth = eth;
@@ -696,19 +702,22 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					return false;
 				}
 #if VERIFY_UMEM
-				fprintf(stderr, "rx_umem=%p tx_umem=%p tx_idx=0x%08x\n",
-						umem_info->umem,
-						xsk_tx->socket_info->xsk->ctx->umem,
-						tx_idx
-						) ;
+				fprintf(stderr,
+					"rx_umem=%p tx_umem=%p tx_idx=0x%08x\n",
+					umem_info->umem,
+					xsk_tx->socket_info->xsk->ctx->umem,
+					tx_idx);
 #endif
 				uint8_t *tx_pkt = xsk_umem__get_data(
 					umem_info->buffer, tx_addr);
-				struct iphdr *tx_ip = ( struct iphdr *) (tx_pkt + sizeof(struct ethhdr));
-				unsigned int * tx_ipu = (unsigned int *) tx_ip;
-				int l = ( tx_ip->ihl < 5 ) ? 5 : tx_ip->ihl;
-				for(int i=0; i<l; i+=1)
-					fprintf(stderr, "tx_ipu[%d]=0x%08x\n", i, tx_ipu[i]) ;
+				struct iphdr *tx_ip =
+					(struct iphdr *)(tx_pkt +
+							 sizeof(struct ethhdr));
+				unsigned int *tx_ipu = (unsigned int *)tx_ip;
+				int l = (tx_ip->ihl < 5) ? 5 : tx_ip->ihl;
+				for (int i = 0; i < l; i += 1)
+					fprintf(stderr, "tx_ipu[%d]=0x%08x\n",
+						i, tx_ipu[i]);
 
 				if (k_instrument) {
 					hexdump(stderr, write_addr,
@@ -871,7 +880,8 @@ static void complete_tx(struct tx_socket_info *xsk_tx,
 					      idx_cq++));
 		}
 
-		xsk_ring_cons__release(&xsk_tx->socket_info->umem_cq, completed);
+		xsk_ring_cons__release(&xsk_tx->socket_info->umem_cq,
+				       completed);
 		xsk_tx->socket_info->outstanding_tx -=
 			completed < xsk_tx->socket_info->outstanding_tx ?
 				completed :
@@ -942,7 +952,7 @@ static void handle_receive_packets(struct xsk_socket_info *xsk_src,
 	stats->stats.rx_batch_count += 1;
 	xsk_ring_cons__release(&xsk_src->rxq, rcvd);
 	/* Do we need to wake up the kernel for transmission */
-	if ( xsk_tx)
+	if (xsk_tx)
 		complete_tx(xsk_tx, umem_info);
 }
 
@@ -1046,7 +1056,7 @@ static void stats_print(struct stats_record *stats_rec,
 		}
 	}
 	printf("\n");
-	fflush(stdout) ;
+	fflush(stdout);
 }
 
 static void *stats_poll(void *arg)
@@ -1087,7 +1097,7 @@ static void *tun_read(void *arg)
 			fprintf(stderr,
 				"tun_read unexpected zero length read\n");
 		} else {
-			if(k_instrument) {
+			if (k_instrument) {
 				fprintf(stderr, "tun_read\n");
 				hexdump(stderr, buffer, count);
 			}
@@ -1208,7 +1218,7 @@ int main(int argc, char **argv)
 
 	int accept_map_fd;
 	struct tx_socket_info *tx_socket_info;
-	bool tx_to_rx_socket ;
+	bool tx_to_rx_socket;
 
 	memset(&stats, 0, sizeof(stats));
 
@@ -1218,7 +1228,8 @@ int main(int argc, char **argv)
 	/* Cmdline options can change progsec */
 	parse_cmdline_args(argc, argv, long_options, &cfg, __doc__);
 
-	tx_to_rx_socket = (cfg.redirect_ifname != NULL) && ( strcmp(cfg.ifname, cfg.redirect_ifname) ==  0) ;
+	tx_to_rx_socket = (cfg.redirect_ifname != NULL) &&
+			  (strcmp(cfg.ifname, cfg.redirect_ifname) == 0);
 
 	/* Required option */
 	if (cfg.ifindex == -1) {
@@ -1283,7 +1294,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	/* Set up receive sockets */
-	assert(cfg.xsk_if_queue <= IF_QUEUE_MAX) ;
+	assert(cfg.xsk_if_queue <= IF_QUEUE_MAX);
 	int packet_buffer_size =
 		NUM_FRAMES * FRAME_SIZE * 2 * (cfg.xsk_if_queue + 1);
 	void *packet_buffer;
@@ -1296,7 +1307,8 @@ int main(int argc, char **argv)
 	}
 	struct xsk_umem_info umem_info;
 	configure_xsk_umem(&umem_info, packet_buffer, packet_buffer_size,
-			   &(umem_info.umem_fq), &(umem_info.umem_cq), NUM_FRAMES * 2 * (cfg.xsk_if_queue + 1));
+			   &(umem_info.umem_fq), &(umem_info.umem_cq),
+			   NUM_FRAMES * 2 * (cfg.xsk_if_queue + 1));
 
 	all_socket_info =
 		xsk_configure_socket_all(&cfg, xsks_map_fd, &umem_info);
@@ -1385,8 +1397,9 @@ int main(int argc, char **argv)
 					rc, errno);
 			}
 		}
-		tx_socket_info = xsk_configure_socket_tx(&cfg, umem_info.umem,
-				tx_to_rx_socket, all_socket_info->xsk_socket_info[0]);
+		tx_socket_info = xsk_configure_socket_tx(
+			&cfg, umem_info.umem, tx_to_rx_socket,
+			all_socket_info->xsk_socket_info[0]);
 		if (tx_socket_info == NULL) {
 			fprintf(stderr,
 				"ERROR: Failed calling xsk_configure_socket_tx "
