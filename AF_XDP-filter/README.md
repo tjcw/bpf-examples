@@ -6,12 +6,21 @@ code. User space code does its determination and sets an entry appropriately in 
 eBPF map. For the second and subsequent packets of the flow, the eBPF kernel
 looks up the decision in the map and returns with XDP_PASS or XDP_DROP appropriately.
 
-The example is currently functional, except that the user space code needs to do
-something useful with the first packet. At the moment it injects the packet to the
-kernel via a TUN/TAP interface, and the kernel drops the packet because it thinks it
-is a 'martian'. So if you try an inbound 'ping' the first ping packet is lost but
-subsequent packets are replied to, and if you try an inbound 'ssh' session there is
-a short delay while the TCP protocol times out and retries the SYN packet.
+There are scripts in the runscripts directory to configure and run various scenarios. runscripts/run-all-real.sh runs netperf and iperf3
+between 2 machines which are assumed to have a functional network and
+a network under test between them. runscripts/run-all-ns.sh runs
+netperf, iperf3, and ping tests between 2 Linux network namespaces on
+a single machine. runscripts/run-all-ns-pings runs just the ping
+tests between 2 Linux network namespaces. run-all-real.sh needs to be
+edited in respect of the IP addresses of the machines.
+
+All tests are functional except for one of the ping tests. Attempting
+a ping between namespaces where the first packet is injected into the
+same interface that it was taken out from results in this first packet
+being lost. Adding 'printk's to the linux kernel shows that this packet
+does not get transferred correctly into kernel memory in this case, and 
+the packet is discarded by the kernel because of an IP header checksum
+error.
 
 For this example, all flows are permitted. This code
 
@@ -49,12 +58,12 @@ mkdir workspace
 cd workspace
 git clone git@github.com:tjcw/bpf-examples.git
 cd bpf-examples
-git checkout tjcw-integration-1.3
+git checkout tjcw-explore-sameeth
 git submodule update --init
 cd bpf-examples
 cd AF_XDP-filter
 make
-cd netperf-namespace 
+cd runscripts/run 
 sudo FILTER=af_xdp_kern PORT=50000 ./run.sh 2>&1|tee logfile.txt
 ```
 
@@ -66,13 +75,11 @@ To build this code, type 'make' in this directory. Built artifacts are
 - filter-xdp_stats -- tool to display traffic statsistics from the map maintained by af_xdp_kern.o
 
 There are a number of  directories which contain run scripts
--      run/run.sh -- run a server on a local machine with a Pensando (16 channel) card that you can ping or ssh to from a client machine.
--      run/runvm.sh -- run a server in a virtual machine that you can ping or ssh to from another virtual machine.
--      run/runnest.sh -- run a server in a nested virtual machine, I run 2 VMs within another VM on my laptop. Ping or ssh from the client nested VM to the server nested VM.
--      run/runns.sh -- standalone test case which sets up 2 namespaces and pings between them
--      iperf3-namespace/run.sh -- run iperf3 between 2 namespaces
--      iperf3-real/run.sh  -- run iperf3 between 2 real machines with 16-channel NICs
--      netperf-namespace/run.sh  -- run netperf between 2 namespaces
--      netperf3-real/run.sh -- run netperf between 2 real machines
--      netperf3-vm/run.sh -- run netperf between 2 real machines
+-      runscripts/run/run.sh -- run a server on a local machine with a Pensando (16 channel) card that you can ping or ssh to from a client machine.
+-      runscripts/run/runvm.sh -- run a server in a virtual machine that you can ping or ssh to from another virtual machine.
+-      runscripts/run/runnest.sh -- run a server in a nested virtual machine, I run 2 VMs within another VM on my laptop. Ping or ssh from the client nested VM to the server nested VM.
+-      runscripts/run/runns.sh -- standalone test case which sets up 2 namespaces and pings between them
+-      runscripts/iperf3-namespace/run.sh -- run iperf3 between 2 namespaces
+-      runscripts/iperf3-real/run.sh  -- run iperf3 between 2 real machines with 16-channel NICs
+-      runscripts/netperf-namespace/run.sh  -- run netperf between 2 namespaces
     
