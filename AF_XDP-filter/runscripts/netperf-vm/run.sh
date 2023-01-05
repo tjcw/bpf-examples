@@ -4,14 +4,15 @@
 # Run this on the server.
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
-# Set CLIENT env var to the IP address of the client
-# Set SERVER env var to the IP address of the server
+# Set CLIENT env var to the IP address of the client on a secondary network
+# Set SERVER env var to the IP address of the server on the network under test
+# Set TUN env var to the IP address to be assigned to the tun device
 
 ip link set dev enp25s0 xdpgeneric off
 rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
 ip tuntap add mode tun tun0
 ip link set dev tun0 down
-ip addr add 10.1.0.254/24 dev tun0
+ip addr add ${TUN}/24 dev tun0
 ip link set dev tun0 up
 if [[ -z "${LEAVE}" ]]
 then 
