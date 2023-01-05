@@ -91,6 +91,16 @@ struct xsk_ctx {
 
 // End of internals from xsk.c
 #endif
+
+#ifndef __NR_pidfd_open
+#define __NR_pidfd_open 434 /* System call # on most architectures */
+#endif
+
+static int pidfd_open(pid_t pid, unsigned int flags)
+{
+	return syscall(__NR_pidfd_open, pid, flags);
+}
+
 const char *pin_basedir = "/sys/fs/bpf";
 
 enum {
@@ -1363,8 +1373,7 @@ int main(int argc, char **argv)
 		/* A pid of 1 would mean 'init', where the setns would be to the root namespace */
 		/* Interpret this as a dummy */
 		if (cfg.redirect_ifname_pid != 1) {
-			int setns_fd = syscall(SYS_pidfd_open,
-					       cfg.redirect_ifname_pid, 0);
+			int setns_fd = pidfd_open(cfg.redirect_ifname_pid, 0);
 			if (setns_fd == -1) {
 				fprintf(stderr,
 					"ERROR: Failed calling pidfd_open) "
