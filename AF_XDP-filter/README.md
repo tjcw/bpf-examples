@@ -83,3 +83,7 @@ There are a number of  directories which contain run scripts
 -      runscripts/iperf3-real/run.sh  -- run iperf3 between 2 real machines with 16-channel NICs
 -      runscripts/netperf-namespace/run.sh  -- run netperf between 2 namespaces
     
+The scripts which run between 2 real machines are set up to assume a
+16-channel ethernet adapter card, which matches the Pensando card I
+have in my machines.  A different card would require adjusting the 
+`-Q` parameter in the scripts.   
