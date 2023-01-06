@@ -49,7 +49,7 @@ fi
   then 
     for device in /proc/sys/net/ipv4/conf/*
     do
-      echo 0 >${device}/rp_filter
+      echo 2 >${device}/rp_filter
     done
     iptables -A INPUT -j LOG
     destination_mac=$(ip netns exec ns2 ip a s dev vpeer2|awk '{ if($1 == "link/ether") { print $2 } }')
