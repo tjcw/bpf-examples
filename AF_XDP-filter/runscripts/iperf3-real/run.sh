@@ -27,6 +27,10 @@ then
   iperf3_pid=$!
   ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
   kill -INT ${iperf3_pid} ${real_pid}
+  for device in /proc/sys/net/ipv4/conf/*
+  do
+    echo 2 >${device}/rp_filter
+  done
 else
   iperf3 -s -p ${PORT} &
   iperf3_pid=$!

@@ -68,6 +68,10 @@ fi
     filter_pid=$!
     sleep 60
     kill -TERM ${af_pid} ${filter_pid}
+    for device in /proc/sys/net/ipv4/conf/*
+    do
+      echo 2 >${device}/rp_filter
+    done
   fi 
   wait
 

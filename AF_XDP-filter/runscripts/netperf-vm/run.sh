@@ -27,7 +27,11 @@ then
   netserver_pid=$!
   ssh ${CLIENT} netperf -4 -t TCP_RR -H ${SERVER} -p 50000 -- -D | tee client_rr.log
   ssh ${CLIENT} netperf -4 -t TCP_CRR -H ${SERVER} -p 50000 -- -D | tee client_crr.log
-  kill -INT ${netserver_pid}
+  kill -INT ${netserver_pid} ${real_pid}
+  for device in /proc/sys/net/ipv4/conf/*
+  do
+    echo 2 >${device}/rp_filter
+  done
 else
   netserver -p 50000 -4 -D -f &
   netserver_pid=$!

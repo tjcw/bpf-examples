@@ -24,5 +24,9 @@ then
   ns2_pid=$!
   sleep 20
   kill -INT ${ns2_pid}
+  for device in /proc/sys/net/ipv4/conf/*
+  do
+    echo 2 >${device}/rp_filter
+  done
 fi 
 wait

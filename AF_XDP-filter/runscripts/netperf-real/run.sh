@@ -35,6 +35,10 @@ then
   sequence_tests
   kill -INT ${real_pid}
   kill -INT ${netserver_pid} 
+  for device in /proc/sys/net/ipv4/conf/*
+  do
+    echo 2 >${device}/rp_filter
+  done
 else
   netserver -p ${PORT} -4 -D -f &
   netserver_pid=$!

@@ -36,5 +36,9 @@ else
   iperf3_pid=$!
   sleep 20
   kill -INT ${iperf3_pid}  
+  for device in /proc/sys/net/ipv4/conf/*
+  do
+    echo 2 >${device}/rp_filter
+  done
 fi 
 wait

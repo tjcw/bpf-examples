@@ -77,6 +77,10 @@ fi
     kill -INT ${af_pid} 
 #    kill -INT ${af_pid_dummy}
     kill -TERM ${filter_pid}
+    for device in /proc/sys/net/ipv4/conf/*
+    do
+      echo 2 >${device}/rp_filter
+    done
   fi 
   wait
 

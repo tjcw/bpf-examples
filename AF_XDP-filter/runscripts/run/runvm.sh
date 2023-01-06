@@ -12,3 +12,7 @@ do
 done
 cd ../..
 ./af_xdp_user -S -d enp1s0 -Q 1 --filename ./af_xdp_kern.o
+for device in /proc/sys/net/ipv4/conf/*
+do
+  echo 2 >${device}/rp_filter
+done

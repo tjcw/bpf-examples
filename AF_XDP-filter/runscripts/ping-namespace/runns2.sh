@@ -36,6 +36,10 @@ fi
     filter_pid=$!
     sleep 60
     kill -TERM ${ns2_pid} ${filter_pid}
+    for device in /proc/sys/net/ipv4/conf/*
+    do
+      echo 2 >${device}/rp_filter
+    done
   else
     sleep 60
   fi 
