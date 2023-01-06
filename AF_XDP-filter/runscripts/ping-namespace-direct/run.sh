@@ -56,7 +56,7 @@ fi
   then 
     for device in /proc/sys/net/ipv4/conf/*
     do
-      echo 0 >${device}/rp_filter
+      echo 2 >${device}/rp_filter
     done
 #    ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -a ${ns2_pid} -r vpeer2 &
     destination_mac=$(ip a s dev br0|awk '{ if($1 == "link/ether") { print $2 } }')
