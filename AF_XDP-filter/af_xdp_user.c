@@ -62,7 +62,7 @@
 #define VERIFY_UMEM 0
 
 #if VERIFY_UMEM
-// Internals of xsk.c copied here for diagnosis
+/* Internals of xsk.c copied here for diagnosis */
 struct xsk_socket {
 	struct xsk_ring_cons *rx;
 	struct xsk_ring_prod *tx;
@@ -89,7 +89,7 @@ struct xsk_ctx {
 #endif
 };
 
-// End of internals from xsk.c
+/* End of internals from xsk.c */
 #endif
 
 #ifndef __NR_pidfd_open
@@ -103,6 +103,7 @@ static int pidfd_open(pid_t pid, unsigned int flags)
 
 const char *pin_basedir = "/sys/fs/bpf";
 
+/* Feature flags */
 enum {
 	k_instrument = false, // Whether to display trace
 	k_instrument_detail = false, // Whether to display detailed trace
@@ -118,6 +119,7 @@ enum {
 	k_rewrite_mac_addresses =
 		false // Whether to rewrite the source and destinationMAC addresses
 };
+/* End of feature flags */
 
 struct xsk_umem_info {
 	struct xsk_umem *umem;
