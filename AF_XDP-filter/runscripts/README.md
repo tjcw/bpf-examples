@@ -18,9 +18,9 @@ ping-namespace-direct-at-veth1 ping between 2 namespaces with intercept at veth1
 
 ping-namespace-direct-with-dummy ping between 2 namespaces with intercept at veth1, reinject at veth2, and dummy eBPF program on veth2.
 
-ping-namespace-direct-with-dummy-at-bridge ping between 2 namespaces with intercept at veth1, reinject at bridge, and dummy eBPF program on veth2. (Should be on bridge).
+ping-namespace-direct-with-dummy-at-bridge ping between 2 namespaces with intercept at veth1, reinject at bridge, and dummy eBPF program on bridge.
 
-ping-namespace-direct-with-dummy-at-source ping between 2 namespaces with intercept at veth1, reinject at vpeer1, and dummy eBPF program on veth2. (Should be on vpeer1)
+ping-namespace-direct-with-dummy-at-source ping between 2 namespaces with intercept at veth1, reinject at vpeer1, and dummy eBPF program on vpeer1.
 
 run/run.sh setup for running on real machine with reinject using tun
 
