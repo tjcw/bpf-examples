@@ -39,6 +39,7 @@
 #include <fcntl.h>
 
 #include <sys/time.h>
+#include <sys/select.h>
 
 #include <sys/syscall.h> /* Definition of SYS_* constants */
 #include <sched.h>
@@ -117,7 +118,8 @@ enum {
 	k_share_rxtx_umem =
 		true, // Whether to share receive and transmit buffers
 	k_rewrite_mac_addresses =
-		false // Whether to rewrite the source and destinationMAC addresses
+		false, // Whether to rewrite the source and destinationMAC addresses
+    k_use_select = true // Whether to use select rather than poll to find the ready queues
 };
 /* End of feature flags */
 
@@ -1005,6 +1007,52 @@ static void rx_and_process(struct config *cfg,
 	}
 }
 
+static void rx_and_process_with_select(struct config *cfg,
+			   struct all_socket_info *all_socket_info,
+			   struct tx_socket_info *tx_socket_info,
+			   struct socket_stats *stats, int tun_fd,
+			   int accept_map_fd, struct xsk_umem_info *umem_info)
+{
+	fd_set readfds ;
+	fd_set readfds_base, writefds_base, exceptfds_base ;
+	int ret, nfds = cfg->xsk_if_queue;
+	int select_nfds = 1;
+	int qfds[IF_QUEUE_MAX] ;
+
+	FD_ZERO(&readfds_base) ;
+	FD_ZERO(&writefds_base) ;
+	FD_ZERO(&exceptfds_base) ;
+
+	for (int q = 0; q < nfds; q += 1) {
+		int fd = xsk_socket__fd(
+			all_socket_info->xsk_socket_info[q]->xsk);
+		assert(fd < FD_SETSIZE);
+		qfds[q] = fd;
+		FD_SET(fd, &readfds_base) ;
+		if ( fd >= select_nfds) select_nfds=fd+1 ;
+	}
+
+	while (!global_exit) {
+		readfds=readfds_base;
+		ret = select(select_nfds,&readfds,&writefds_base,&exceptfds_base,NULL);
+		if (k_instrument)
+			fprintf(stderr, "rx_and_process_with_select select returns %d\n",
+				ret);
+		for(int q=0; q < nfds; q += 1) {
+			if ( FD_ISSET(qfds[q],&readfds)) {
+				if (k_instrument)
+					fprintf(stderr, "rx_and_process_with_select q=%d\n",
+						q);
+				handle_receive_packets(
+					all_socket_info->xsk_socket_info[q],
+					tx_socket_info, stats, tun_fd,
+					accept_map_fd, umem_info);
+
+			}
+		}
+	}
+}
+
 #define NANOSEC_PER_SEC 1000000000 /* 10^9 */
 static uint64_t gettime(void)
 {
@@ -1436,8 +1484,13 @@ int main(int argc, char **argv)
 	}
 	/* Receive and count packets than drop them */
 	gettimeofday(&(stats.start_time), NULL);
-	rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
-		       accept_map_fd, &umem_info);
+	if(k_use_select){
+		rx_and_process_with_select(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
+				   accept_map_fd, &umem_info);
+	} else {
+		rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
+				   accept_map_fd, &umem_info);
+	}
 
 	/* Cleanup */
 	if (tun_fd != -1)
