@@ -120,7 +120,7 @@ enum {
 		true, // Whether to share receive and transmit buffers
 	k_rewrite_mac_addresses =
 		false, // Whether to rewrite the source and destinationMAC addresses
-    k_use_select = false, // Whether to use select rather than poll to find the ready queues
+    k_use_select = true, // Whether to use select rather than poll to find the ready queues
     k_use_epoll = false ,// Whether to use epoll rather than poll to find the ready queues
 	k_userspace_all_packets = true // Whether to have the kernel send all packets to user space
 };
