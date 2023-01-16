@@ -120,9 +120,12 @@ enum {
 		true, // Whether to share receive and transmit buffers
 	k_rewrite_mac_addresses =
 		false, // Whether to rewrite the source and destinationMAC addresses
-    k_use_select = true, // Whether to use select rather than poll to find the ready queues
-    k_use_epoll = false ,// Whether to use epoll rather than poll to find the ready queues
-	k_userspace_all_packets = true // Whether to have the kernel send all packets to user space
+	k_use_select =
+		false, // Whether to use select rather than poll to find the ready queues
+	k_use_epoll =
+		false, // Whether to use epoll rather than poll to find the ready queues
+	k_userspace_all_packets =
+		true // Whether to have the kernel send all packets to user space
 };
 /* End of feature flags */
 
@@ -731,10 +734,13 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 					(struct iphdr *)(tx_pkt +
 							 sizeof(struct ethhdr));
 				if (k_instrument) {
-					unsigned int *tx_ipu = (unsigned int *)tx_ip;
-					int l = (tx_ip->ihl < 5) ? 5 : tx_ip->ihl;
+					unsigned int *tx_ipu =
+						(unsigned int *)tx_ip;
+					int l = (tx_ip->ihl < 5) ? 5 :
+								   tx_ip->ihl;
 					for (int i = 0; i < l; i += 1)
-						fprintf(stderr, "tx_ipu[%d]=0x%08x\n",
+						fprintf(stderr,
+							"tx_ipu[%d]=0x%08x\n",
 							i, tx_ipu[i]);
 				}
 
@@ -984,7 +990,7 @@ static void rx_and_process(struct config *cfg,
 	struct pollfd fds[k_rx_queue_count_max];
 	int ret, nfds = cfg->xsk_if_queue;
 
-	assert(nfds <= k_rx_queue_count_max) ;
+	assert(nfds <= k_rx_queue_count_max);
 	memset(fds, 0, sizeof(fds));
 	for (int q = 0; q < nfds; q += 1) {
 		fds[q].fd = xsk_socket__fd(
@@ -1014,86 +1020,94 @@ static void rx_and_process(struct config *cfg,
 }
 
 static void rx_and_process_with_epoll(struct config *cfg,
-			   struct all_socket_info *all_socket_info,
-			   struct tx_socket_info *tx_socket_info,
-			   struct socket_stats *stats, int tun_fd,
-			   int accept_map_fd, struct xsk_umem_info *umem_info)
+				      struct all_socket_info *all_socket_info,
+				      struct tx_socket_info *tx_socket_info,
+				      struct socket_stats *stats, int tun_fd,
+				      int accept_map_fd,
+				      struct xsk_umem_info *umem_info)
 {
-	int epoll_fd=epoll_create(1) ;
+	int epoll_fd = epoll_create(1);
 	int ret, nfds = cfg->xsk_if_queue;
 	struct epoll_event ev, events[k_rx_queue_count_max];
 
-	assert(nfds <= k_rx_queue_count_max) ;
+	assert(nfds <= k_rx_queue_count_max);
 	for (int q = 0; q < nfds; q += 1) {
 		ev.events = EPOLLIN;
 		ev.data.u32 = q;
-		ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD,
-				xsk_socket__fd(all_socket_info->xsk_socket_info[q]->xsk),
-				&ev) ;
+		ret = epoll_ctl(
+			epoll_fd, EPOLL_CTL_ADD,
+			xsk_socket__fd(
+				all_socket_info->xsk_socket_info[q]->xsk),
+			&ev);
 	}
 
 	while (!global_exit) {
-		ret = epoll_wait(epoll_fd, events, k_rx_queue_count_max,-1);
+		ret = epoll_wait(epoll_fd, events, k_rx_queue_count_max, -1);
 		if (k_instrument)
-			fprintf(stderr, "rx_and_process_with_epoll epoll_wait returns %d\n",
+			fprintf(stderr,
+				"rx_and_process_with_epoll epoll_wait returns %d\n",
 				ret);
 		if (ret == -1)
 			continue;
 		for (int i = 0; i < ret; i += 1) {
-			int q = events[i].data.u32 ;
-				if (k_instrument)
-					fprintf(stderr, "rx_and_process_with_epoll q=%d\n",
-						q);
-				handle_receive_packets(
-					all_socket_info->xsk_socket_info[q],
-					tx_socket_info, stats, tun_fd,
-					accept_map_fd, umem_info);
+			int q = events[i].data.u32;
+			if (k_instrument)
+				fprintf(stderr,
+					"rx_and_process_with_epoll q=%d\n", q);
+			handle_receive_packets(
+				all_socket_info->xsk_socket_info[q],
+				tx_socket_info, stats, tun_fd, accept_map_fd,
+				umem_info);
 		}
 	}
 }
 
 static void rx_and_process_with_select(struct config *cfg,
-			   struct all_socket_info *all_socket_info,
-			   struct tx_socket_info *tx_socket_info,
-			   struct socket_stats *stats, int tun_fd,
-			   int accept_map_fd, struct xsk_umem_info *umem_info)
+				       struct all_socket_info *all_socket_info,
+				       struct tx_socket_info *tx_socket_info,
+				       struct socket_stats *stats, int tun_fd,
+				       int accept_map_fd,
+				       struct xsk_umem_info *umem_info)
 {
-	fd_set readfds ;
-	fd_set readfds_base, writefds_base, exceptfds_base ;
+	fd_set readfds;
+	fd_set readfds_base, writefds_base, exceptfds_base;
 	int ret, nfds = cfg->xsk_if_queue;
 	int select_nfds = 1;
-	int qfds[k_rx_queue_count_max] ;
+	int qfds[k_rx_queue_count_max];
 
-	FD_ZERO(&readfds_base) ;
-	FD_ZERO(&writefds_base) ;
-	FD_ZERO(&exceptfds_base) ;
+	FD_ZERO(&readfds_base);
+	FD_ZERO(&writefds_base);
+	FD_ZERO(&exceptfds_base);
 
-	assert(nfds <= k_rx_queue_count_max) ;
+	assert(nfds <= k_rx_queue_count_max);
 	for (int q = 0; q < nfds; q += 1) {
 		int fd = xsk_socket__fd(
 			all_socket_info->xsk_socket_info[q]->xsk);
 		assert(fd < FD_SETSIZE);
 		qfds[q] = fd;
-		FD_SET(fd, &readfds_base) ;
-		if ( fd >= select_nfds) select_nfds=fd+1 ;
+		FD_SET(fd, &readfds_base);
+		if (fd >= select_nfds)
+			select_nfds = fd + 1;
 	}
 
 	while (!global_exit) {
-		readfds=readfds_base;
-		ret = select(select_nfds,&readfds,&writefds_base,&exceptfds_base,NULL);
+		readfds = readfds_base;
+		ret = select(select_nfds, &readfds, &writefds_base,
+			     &exceptfds_base, NULL);
 		if (k_instrument)
-			fprintf(stderr, "rx_and_process_with_select select returns %d\n",
+			fprintf(stderr,
+				"rx_and_process_with_select select returns %d\n",
 				ret);
-		for(int q=0; q < nfds; q += 1) {
-			if ( FD_ISSET(qfds[q],&readfds)) {
+		for (int q = 0; q < nfds; q += 1) {
+			if (FD_ISSET(qfds[q], &readfds)) {
 				if (k_instrument)
-					fprintf(stderr, "rx_and_process_with_select q=%d\n",
+					fprintf(stderr,
+						"rx_and_process_with_select q=%d\n",
 						q);
 				handle_receive_packets(
 					all_socket_info->xsk_socket_info[q],
 					tx_socket_info, stats, tun_fd,
 					accept_map_fd, umem_info);
-
 			}
 		}
 	}
@@ -1530,15 +1544,17 @@ int main(int argc, char **argv)
 	}
 	/* Receive and count packets than drop them */
 	gettimeofday(&(stats.start_time), NULL);
-	if(k_use_select){
-		rx_and_process_with_select(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
-				   accept_map_fd, &umem_info);
-	} else if(k_use_epoll) {
-			rx_and_process_with_epoll(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
+	if (k_use_select) {
+		rx_and_process_with_select(&cfg, all_socket_info,
+					   tx_socket_info, &stats, tun_fd,
 					   accept_map_fd, &umem_info);
+	} else if (k_use_epoll) {
+		rx_and_process_with_epoll(&cfg, all_socket_info, tx_socket_info,
+					  &stats, tun_fd, accept_map_fd,
+					  &umem_info);
 	} else {
-		rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
-				   accept_map_fd, &umem_info);
+		rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats,
+			       tun_fd, accept_map_fd, &umem_info);
 	}
 
 	/* Cleanup */
