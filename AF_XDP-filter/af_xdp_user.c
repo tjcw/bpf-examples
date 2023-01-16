@@ -121,7 +121,7 @@ enum {
 	k_rewrite_mac_addresses =
 		false, // Whether to rewrite the source and destinationMAC addresses
     k_use_select = false, // Whether to use select rather than poll to find the ready queues
-    k_use_epoll = true ,// Whether to use epoll rather than poll to find the ready queues
+    k_use_epoll = false ,// Whether to use epoll rather than poll to find the ready queues
 	k_userspace_all_packets = true // Whether to have the kernel send all packets to user space
 };
 /* End of feature flags */
