@@ -40,6 +40,7 @@
 
 #include <sys/time.h>
 #include <sys/select.h>
+#include <sys/epoll.h>
 
 #include <sys/syscall.h> /* Definition of SYS_* constants */
 #include <sched.h>
@@ -119,7 +120,8 @@ enum {
 		true, // Whether to share receive and transmit buffers
 	k_rewrite_mac_addresses =
 		false, // Whether to rewrite the source and destinationMAC addresses
-    k_use_select = true // Whether to use select rather than poll to find the ready queues
+    k_use_select = false, // Whether to use select rather than poll to find the ready queues
+    k_use_epoll = true // Whether to use epoll rather than poll to find the ready queues
 };
 /* End of feature flags */
 
@@ -979,6 +981,7 @@ static void rx_and_process(struct config *cfg,
 	struct pollfd fds[k_rx_queue_count_max];
 	int ret, nfds = cfg->xsk_if_queue;
 
+	assert(nfds <= k_rx_queue_count_max) ;
 	memset(fds, 0, sizeof(fds));
 	for (int q = 0; q < nfds; q += 1) {
 		fds[q].fd = xsk_socket__fd(
@@ -1007,6 +1010,45 @@ static void rx_and_process(struct config *cfg,
 	}
 }
 
+static void rx_and_process_with_epoll(struct config *cfg,
+			   struct all_socket_info *all_socket_info,
+			   struct tx_socket_info *tx_socket_info,
+			   struct socket_stats *stats, int tun_fd,
+			   int accept_map_fd, struct xsk_umem_info *umem_info)
+{
+	int epoll_fd=epoll_create(1) ;
+	int ret, nfds = cfg->xsk_if_queue;
+	struct epoll_event ev, events[k_rx_queue_count_max];
+
+	assert(nfds <= k_rx_queue_count_max) ;
+	for (int q = 0; q < nfds; q += 1) {
+		ev.events = EPOLLIN;
+		ev.data.u32 = q;
+		ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD,
+				xsk_socket__fd(all_socket_info->xsk_socket_info[q]->xsk),
+				&ev) ;
+	}
+
+	while (!global_exit) {
+		ret = epoll_wait(epoll_fd, events, k_rx_queue_count_max,-1);
+		if (k_instrument)
+			fprintf(stderr, "rx_and_process_with_epoll epoll_wait returns %d\n",
+				ret);
+		if (ret == -1)
+			continue;
+		for (int i = 0; i < ret; i += 1) {
+			int q = events[i].data.u32 ;
+				if (k_instrument)
+					fprintf(stderr, "rx_and_process_with_epoll q=%d\n",
+						q);
+				handle_receive_packets(
+					all_socket_info->xsk_socket_info[q],
+					tx_socket_info, stats, tun_fd,
+					accept_map_fd, umem_info);
+		}
+	}
+}
+
 static void rx_and_process_with_select(struct config *cfg,
 			   struct all_socket_info *all_socket_info,
 			   struct tx_socket_info *tx_socket_info,
@@ -1017,12 +1059,13 @@ static void rx_and_process_with_select(struct config *cfg,
 	fd_set readfds_base, writefds_base, exceptfds_base ;
 	int ret, nfds = cfg->xsk_if_queue;
 	int select_nfds = 1;
-	int qfds[IF_QUEUE_MAX] ;
+	int qfds[k_rx_queue_count_max] ;
 
 	FD_ZERO(&readfds_base) ;
 	FD_ZERO(&writefds_base) ;
 	FD_ZERO(&exceptfds_base) ;
 
+	assert(nfds <= k_rx_queue_count_max) ;
 	for (int q = 0; q < nfds; q += 1) {
 		int fd = xsk_socket__fd(
 			all_socket_info->xsk_socket_info[q]->xsk);
@@ -1487,6 +1530,9 @@ int main(int argc, char **argv)
 	if(k_use_select){
 		rx_and_process_with_select(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
 				   accept_map_fd, &umem_info);
+	} else if(k_use_epoll) {
+			rx_and_process_with_epoll(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
+					   accept_map_fd, &umem_info);
 	} else {
 		rx_and_process(&cfg, all_socket_info, tx_socket_info, &stats, tun_fd,
 				   accept_map_fd, &umem_info);
