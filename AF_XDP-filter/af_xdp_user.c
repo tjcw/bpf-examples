@@ -730,11 +730,13 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 				struct iphdr *tx_ip =
 					(struct iphdr *)(tx_pkt +
 							 sizeof(struct ethhdr));
-				unsigned int *tx_ipu = (unsigned int *)tx_ip;
-				int l = (tx_ip->ihl < 5) ? 5 : tx_ip->ihl;
-				for (int i = 0; i < l; i += 1)
-					fprintf(stderr, "tx_ipu[%d]=0x%08x\n",
-						i, tx_ipu[i]);
+				if (k_instrument) {
+					unsigned int *tx_ipu = (unsigned int *)tx_ip;
+					int l = (tx_ip->ihl < 5) ? 5 : tx_ip->ihl;
+					for (int i = 0; i < l; i += 1)
+						fprintf(stderr, "tx_ipu[%d]=0x%08x\n",
+							i, tx_ipu[i]);
+				}
 
 				if (k_instrument) {
 					hexdump(stderr, write_addr,

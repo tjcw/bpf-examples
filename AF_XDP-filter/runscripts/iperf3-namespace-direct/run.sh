@@ -36,17 +36,22 @@ iptables -P FORWARD ACCEPT
 iptables -F FORWARD
 
 
-destination_mac=$(ip a s dev br0|awk '{ if($1 == "link/ether") { print $2 } }')
-source_mac=$(ip a s dev veth2|awk '{ if($1 == "link/ether") { print $2 } }')
-DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -a 1 -r br0 &
-af_pid=$!
-sleep 2
-../../filter-xdp_stats &
-filter_pid=$!
+if [[ -z "${LEAVE}" ]]
+then 
+  destination_mac=$(ip a s dev br0|awk '{ if($1 == "link/ether") { print $2 } }')
+  source_mac=$(ip a s dev veth2|awk '{ if($1 == "link/ether") { print $2 } }')
+  DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -a 1 -r br0 &
+  af_pid=$!
+  sleep 2
+  ../../filter-xdp_stats &
+  filter_pid=$!
+fi
 ip netns exec ns2 ./runns2.sh &
 ip netns exec ns1 ./runns1.sh
 sleep 60
-kill -TERM ${af_pid} ${filter_pid}
-
-wait
+if [[ -z "${LEAVE}" ]]
+then 
+  kill -TERM ${af_pid} ${filter_pid}
+  wait
+fi
 

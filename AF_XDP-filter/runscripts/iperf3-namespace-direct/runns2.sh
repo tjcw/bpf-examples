@@ -17,28 +17,8 @@ mount -t bpf bpf /sys/fs/bpf
 df /sys/fs/bpf
 ls -l /sys/fs/bpf
 rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
-if [[ -z "${LEAVE}" ]]
-then 
-  for device in /proc/sys/net/ipv4/conf/*
-  do
-    echo 0 >${device}/rp_filter
-  done
-  cd ../..
-  ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
-  ns2_pid=$!
-  sleep 2
-  iperf3 -s -p ${PORT} &
-  iperf3_pid=$!
-  sleep 20
-  kill -INT ${ns2_pid} ${iperf3_pid}
-else
-  iperf3 -s -p ${PORT} &
-  iperf3_pid=$!
-  sleep 20
-  kill -INT ${iperf3_pid}  
-  for device in /proc/sys/net/ipv4/conf/*
-  do
-    echo 2 >${device}/rp_filter
-  done
-fi 
+iperf3 -s -p ${PORT} &
+iperf3_pid=$!
+sleep 20
+kill -INT ${iperf3_pid}
 wait
