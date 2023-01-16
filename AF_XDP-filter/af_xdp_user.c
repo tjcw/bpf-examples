@@ -121,7 +121,8 @@ enum {
 	k_rewrite_mac_addresses =
 		false, // Whether to rewrite the source and destinationMAC addresses
     k_use_select = false, // Whether to use select rather than poll to find the ready queues
-    k_use_epoll = true // Whether to use epoll rather than poll to find the ready queues
+    k_use_epoll = true ,// Whether to use epoll rather than poll to find the ready queues
+	k_userspace_all_packets = true // Whether to have the kernel send all packets to user space
 };
 /* End of feature flags */
 
@@ -553,9 +554,9 @@ static bool filter_pass_tcp(int accept_map_fd, __u32 saddr, __u32 daddr,
 	if (ret == 0) {
 		if (k_verbose)
 			fprintf(stderr, "Value %d found in map\n", a);
-		return a == XDP_PASS;
+		return a != XDP_DROP;
 	}
-	a = XDP_PASS;
+	a = k_userspace_all_packets ? XDP_REDIRECT : XDP_PASS;
 	if (k_verbose)
 		fprintf(stderr, "No value in map, setting to %d\n", a);
 	ret = bpf_map_update_elem(accept_map_fd, &f, &a, BPF_ANY);
@@ -577,9 +578,9 @@ static bool filter_pass_udp(int accept_map_fd, __u32 saddr, __u32 daddr,
 	if (ret == 0) {
 		if (k_verbose)
 			fprintf(stderr, "Value %d found in map\n", a);
-		return a == XDP_PASS;
+		return a != XDP_DROP;
 	}
-	a = XDP_PASS;
+	a = k_userspace_all_packets ? XDP_REDIRECT : XDP_PASS;
 	if (k_verbose)
 		fprintf(stderr, "No value in map, setting to %d\n", a);
 	ret = bpf_map_update_elem(accept_map_fd, &f, &a, BPF_ANY);
@@ -601,9 +602,9 @@ static bool filter_pass_icmp(int accept_map_fd, __u32 saddr, __u32 daddr,
 	if (ret == 0) {
 		if (k_verbose)
 			fprintf(stderr, "Value %d found in map\n", a);
-		return a == XDP_PASS;
+		return a != XDP_DROP;
 	}
-	a = XDP_PASS;
+	a = k_userspace_all_packets ? XDP_REDIRECT : XDP_PASS;
 	if (k_verbose)
 		fprintf(stderr, "No value in map, setting to %d\n", a);
 	ret = bpf_map_update_elem(accept_map_fd, &f, &a, BPF_ANY);
