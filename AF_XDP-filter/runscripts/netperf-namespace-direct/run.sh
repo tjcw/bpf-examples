@@ -60,7 +60,7 @@ iptables -F FORWARD
     sleep 2
     ../../filter-xdp_stats &
     filter_pid=$!
-    sleep 60
+    sleep 240
     kill -TERM ${af_pid} ${filter_pid}
     for device in /proc/sys/net/ipv4/conf/*
     do

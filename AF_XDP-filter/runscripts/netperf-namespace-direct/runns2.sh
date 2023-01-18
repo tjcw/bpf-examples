@@ -17,9 +17,9 @@ fi
 
 netserver -p ${PORT} -4 -D -f &
 netserver_pid=$!
-sleep 60
+sleep 240
 kill -INT ${netserver_pid}  
-wait
+#wait
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_vpeer2_pid}
