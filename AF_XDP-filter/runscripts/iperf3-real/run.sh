@@ -7,6 +7,7 @@
 # Set FILTER env var to af_xdp_kern or af_xdp_kern_passall according to which filter to use
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 # Set PORT to choose a port for the server to listen on
+# Set TUN_IP, CLIENT_IP, and SERVER_IP as required
 
 ip link set dev enp25s0 xdpgeneric off
 rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
@@ -23,8 +24,10 @@ then
   cd ../..
   ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
   real_pid=$!
+  sleep 2
   iperf3 -s -p ${PORT}  &
   iperf3_pid=$!
+  sleep 2
   ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
   kill -INT ${iperf3_pid} ${real_pid}
   for device in /proc/sys/net/ipv4/conf/*
