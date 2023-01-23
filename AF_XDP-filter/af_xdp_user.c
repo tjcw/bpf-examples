@@ -125,7 +125,9 @@ enum {
 	k_use_epoll =
 		false, // Whether to use epoll rather than poll to find the ready queues
 	k_userspace_all_packets =
-		false // Whether to have the kernel send all packets to user space
+		false, // Whether to have the kernel send all packets to user space
+	k_timeout_wait =
+		true // Whether to set a 10ms timeout on the wait for another packet
 };
 /* End of feature flags */
 
@@ -999,7 +1001,7 @@ static void rx_and_process(struct config *cfg,
 	}
 
 	while (!global_exit) {
-		ret = poll(fds, nfds, -1);
+		ret = poll(fds, nfds, k_timeout_wait ? 10 : -1);
 		if (k_instrument)
 			fprintf(stderr, "rx_and_process poll returns %d\n",
 				ret);
@@ -1042,7 +1044,7 @@ static void rx_and_process_with_epoll(struct config *cfg,
 	}
 
 	while (!global_exit) {
-		ret = epoll_wait(epoll_fd, events, k_rx_queue_count_max, -1);
+		ret = epoll_wait(epoll_fd, events, k_rx_queue_count_max, k_timeout_wait ? 10 : -1);
 		if (k_instrument)
 			fprintf(stderr,
 				"rx_and_process_with_epoll epoll_wait returns %d\n",
@@ -1091,9 +1093,12 @@ static void rx_and_process_with_select(struct config *cfg,
 	}
 
 	while (!global_exit) {
+		struct timeval timeout ;
 		readfds = readfds_base;
+		timeout.tv_sec = 0 ;
+		timeout.tv_usec = 10*1000;
 		ret = select(select_nfds, &readfds, &writefds_base,
-			     &exceptfds_base, NULL);
+			     &exceptfds_base, k_timeout_wait ? &timeout : NULL);
 		if (k_instrument)
 			fprintf(stderr,
 				"rx_and_process_with_select select returns %d\n",
