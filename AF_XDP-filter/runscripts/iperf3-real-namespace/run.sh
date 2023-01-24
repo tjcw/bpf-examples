@@ -35,7 +35,7 @@ ip link set veth1 master br0
 #ip link set enp1s0 master br0
 
 ssh ${CLIENT_IP} ip route add -host ${SERVER_IP} gw ${SERVER_NODE_IP}
-ip netns exec ns1 ip route add default via ${SERVER_NODE_IP} dev vpeer1
+ip netns exec ns1 ip route add default via ${BRIDGE_IP} dev vpeer1
 if [[ -z "${LEAVE}" ]]
 then 
   for device in /proc/sys/net/ipv4/conf/*
