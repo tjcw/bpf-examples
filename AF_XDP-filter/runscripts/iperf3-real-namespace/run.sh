@@ -19,7 +19,6 @@ ip link delete veth1
 ip link delete veth2
 
 ip netns delete ns1
-ip netns delete ns2
 
 rm -f vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump
 
@@ -30,23 +29,22 @@ ip link set vpeer1 netns ns1
 
 ip link add br0 type bridge
 ip link set br0 up
-ip addr add 10.2.0.1/16 dev br0
+ip addr add ${BRIDGE_IP}/16 dev br0
 
 ip link set veth1 master br0
 ip link set enp25s0 master br0
 
-ssh ${CLIENT_IP} route add host 10.2.0.2 gw 10.1.0.2
+ssh ${CLIENT_IP} route add -host ${SERVER_IP} gw ${SERVER_NODE_IP}
 if [[ -z "${LEAVE}" ]]
 then 
   for device in /proc/sys/net/ipv4/conf/*
   do
     echo 2 >${device}/rp_filter
   done
-  cd ../..
   ip netns exec ns1 iperf3 -s -p ${PORT}  &
   iperf3_pid=$!
   sleep 2
-  ./af_xdp_user -S -d veth1 -Q 16 --filename ./${FILTER}.o -r vpeer1 -a ${iperf3_pid} &
+  ../../af_xdp_user -S -d veth1 -Q 16 --filename ../../${FILTER}.o -r vpeer1 -a ${iperf3_pid} &
   real_pid=$!
   sleep 2
   ssh ${CLIENT_IP} iperf3 -c 10.2.0.2 -p ${PORT} | tee client.log
@@ -58,10 +56,10 @@ then
 else
   ip netns exec ns1 iperf3 -s -p ${PORT} &
   iperf3_pid=$!
-  ssh ${CLIENT_IP} iperf3 -c 10.2.0.2 -p ${PORT} | tee client.log
+  ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
   kill -INT ${iperf3_pid}
 fi
 wait
-ssh ${CLIENT_IP} route del host 10.2.0.2 gw 10.1.0.2
+ssh ${CLIENT_IP} route del -host ${SERVER_IP} gw ${SERVER_NODE_IP}
 
 
