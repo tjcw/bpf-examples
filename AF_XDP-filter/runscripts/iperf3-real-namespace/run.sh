@@ -29,7 +29,7 @@ ip link set vpeer1 netns ns1
 
 ip link add br0 type bridge
 ip link set br0 up
-ip addr add ${BRIDGE_IP}/16 dev br0
+ip addr add ${BRIDGE_IP}/24 dev br0
 
 ip link set veth1 master br0
 ip link set enp1s0 master br0
@@ -44,10 +44,10 @@ then
   ip netns exec ns1 iperf3 -s -p ${PORT}  &
   iperf3_pid=$!
   sleep 2
-  ../../af_xdp_user -S -d veth1 -Q 16 --filename ../../${FILTER}.o -r vpeer1 -a ${iperf3_pid} &
+  ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${iperf3_pid} &
   real_pid=$!
   sleep 2
-  ssh ${CLIENT_IP} iperf3 -c 10.2.0.2 -p ${PORT} | tee client.log
+  ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
   kill -INT ${iperf3_pid} ${real_pid}
   for device in /proc/sys/net/ipv4/conf/*
   do
