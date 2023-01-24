@@ -26,6 +26,7 @@ ip netns add ns1
 ip link add veth1 type veth peer name vpeer1
 ip link set veth1 up
 ip link set vpeer1 netns ns1
+ip netns exec ns1 ip addr add ${SERVER_IP} dev vpeer1
 
 ip link add br0 type bridge
 ip addr add ${BRIDGE_IP}/24 dev br0
