@@ -32,7 +32,7 @@ ip link set br0 up
 ip addr add ${BRIDGE_IP}/16 dev br0
 
 ip link set veth1 master br0
-ip link set enp25s0 master br0
+ip link set enp1s0 master br0
 
 ssh ${CLIENT_IP} route add -host ${SERVER_IP} gw ${SERVER_NODE_IP}
 if [[ -z "${LEAVE}" ]]
