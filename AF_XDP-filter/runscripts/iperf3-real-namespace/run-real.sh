@@ -54,7 +54,7 @@ then
   ip netns exec ns1 iperf3 -s -p ${PORT}  &
   iperf3_pid=$!
   sleep 2
-  ../../af_xdp_user -S -d enp25s0 -Q 16 --filename ../../${FILTER}.o -r vpeer1 -a ${iperf3_pid} &
+  ../../af_xdp_user -S -d enp25s0 -Q 16 --filename ../../${FILTER}.o -r veth1 &
   real_pid=$!
   sleep 2
   ssh ${CLIENT_IP} iperf3 -c ${SERVER_NODE_IP} -p ${PORT} | tee client.log
