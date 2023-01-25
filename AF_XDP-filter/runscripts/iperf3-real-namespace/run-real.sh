@@ -16,6 +16,8 @@ export SERVER_NODE_IP=10.1.0.2
 export FILTER=af_xdp_kern
 export LEAVE=1
 export PORT=50000
+export CLIENT_NODE_IP=10.1.0.1
+export CLIENT_MAC=02:08:0a:01:00:01
 ip addr del ${SERVER_NODE_IP}/24 dev enp25s0
 ip link set dev enp25s0 xdpgeneric off
 rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
@@ -26,11 +28,14 @@ ip netns delete ns1
 
 rm -f vpeer1.tcpdump veth1.tcpdump
 
+ip addr add ${BRIDGE_IP}/24 dev br0
 ip netns add ns1
 ip link add veth1 type veth peer name vpeer1
 ip link set veth1 up
 ip link set vpeer1 netns ns1
-ip netns exec ns1 ip addr add ${SERVER_NODE_IP} dev vpeer1
+ip netns exec ns1 ip addr add ${SERVER_NODE_IP}/24 dev vpeer1
+ip netns exec ns1 ip link set vpeer1 up
+ip netns exec ns1 arp -s ${CLIENT_NODE_IP} ${CLIENT_MAC}
 
 ip link add br0 type bridge
 #ip addr add ${BRIDGE_IP}/24 dev br0
