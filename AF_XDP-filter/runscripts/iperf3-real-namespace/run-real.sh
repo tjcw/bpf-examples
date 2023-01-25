@@ -10,7 +10,7 @@
 # Set CLIENT_IP, SERVER_IP, BRIDGE_IP and SERVER_NODE_IP as required
 
 export CLIENT_IP=192.168.17.9
-export SERVER_IP=10.1.0.253
+#export SERVER_IP=10.1.0.253
 export BRIDGE_IP=10.1.0.254
 export SERVER_NODE_IP=10.1.0.2
 export FILTER=af_xdp_kern
@@ -58,7 +58,7 @@ then
   ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${iperf3_pid} &
   real_pid=$!
   sleep 2
-  ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
+  ssh ${CLIENT_IP} iperf3 -c ${SERVER_NODE_IP} -p ${PORT} | tee client.log
   kill -INT ${iperf3_pid} ${real_pid}
   for device in /proc/sys/net/ipv4/conf/*
   do
@@ -67,7 +67,7 @@ then
 else
   ip netns exec ns1 iperf3 -s -p ${PORT} &
   iperf3_pid=$!
-  ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
+  ssh ${CLIENT_IP} iperf3 -c ${SERVER_NODE_IP} -p ${PORT} | tee client.log
   kill -INT ${iperf3_pid}
 fi
 wait
