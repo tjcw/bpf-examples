@@ -10,11 +10,10 @@
 # Set CLIENT_IP, SERVER_IP, BRIDGE_IP and SERVER_NODE_IP as required
 
 export CLIENT_IP=192.168.17.9
-#export SERVER_IP=10.1.0.253
 export BRIDGE_IP=10.1.0.254
 export SERVER_NODE_IP=10.1.0.2
 export FILTER=af_xdp_kern
-export LEAVE=1
+#export LEAVE=1
 export PORT=50000
 export CLIENT_NODE_IP=10.1.0.1
 export CLIENT_MAC=02:08:0a:01:00:01
@@ -55,7 +54,7 @@ then
   ip netns exec ns1 iperf3 -s -p ${PORT}  &
   iperf3_pid=$!
   sleep 2
-  ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${iperf3_pid} &
+  ../../af_xdp_user -S -d veth1 -Q 16 --filename ../../${FILTER}.o -r vpeer1 -a ${iperf3_pid} &
   real_pid=$!
   sleep 2
   ssh ${CLIENT_IP} iperf3 -c ${SERVER_NODE_IP} -p ${PORT} | tee client.log
