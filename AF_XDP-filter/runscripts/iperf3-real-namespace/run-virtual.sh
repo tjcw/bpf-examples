@@ -9,35 +9,31 @@
 # Set PORT to choose a port for the server to listen on
 # Set CLIENT_IP, SERVER_IP, BRIDGE_IP and SERVER_NODE_IP as required
 
-export CLIENT_IP=192.168.17.9
-export SERVER_IP=10.1.0.253
-export BRIDGE_IP=10.1.0.254
-export SERVER_NODE_IP=10.1.0.2
-export FILTER=af_xdp_kern
-export LEAVE=1
-export PORT=50000
-ip addr del ${SERVER_NODE_IP}/24 dev enp25s0
-ip link set dev enp25s0 xdpgeneric off
+ip link set dev enp1s0 xdpgeneric off
 rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
-
+#ip tuntap add mode tun tun0
+#ip link set dev tun0 down
+#ip addr add ${TUN_IP}/24 dev tun0
+#ip link set dev tun0 up
 ip link delete veth1
+ip link delete veth2
 
 ip netns delete ns1
 
-rm -f vpeer1.tcpdump veth1.tcpdump
+rm -f vpeer1.tcpdump vpeer2.tcpdump veth1.tcpdump veth2.tcpdump
 
 ip netns add ns1
 ip link add veth1 type veth peer name vpeer1
 ip link set veth1 up
 ip link set vpeer1 netns ns1
-ip netns exec ns1 ip addr add ${SERVER_NODE_IP} dev vpeer1
+ip netns exec ns1 ip addr add ${SERVER_IP} dev vpeer1
 
 ip link add br0 type bridge
-#ip addr add ${BRIDGE_IP}/24 dev br0
+ip addr add ${BRIDGE_IP}/24 dev br0
 ip link set br0 up
 
 ip link set veth1 master br0
-ip link set enp25s0 master br0
+#ip link set enp1s0 master br0
 
 #ssh ${CLIENT_IP} ip route add -host ${SERVER_IP} gw ${SERVER_NODE_IP}
 #ip netns exec ns1 ip route add default via ${BRIDGE_IP} dev vpeer1
