@@ -216,7 +216,37 @@ int xsk_my_prog(struct xdp_md *ctx)
 		if (k_tracing)
 			bpf_printk("nh_type=0x%04x ETH_P_IP=0x%04x", nh_type,
 				   ETH_P_IP);
+		struct ethhdr ethx ;
+		ethx = *eth ;
+		if (nh_type == bpf_htons(ETH_P_8021Q)) {
+			/* VLAN tag was inserted by first pass */
+			if(nh.pos + sizeof(ethx.h_proto) > data_end) {
+				action = XDP_DROP ;
+				goto out ;
+			}
+			ethx.h_proto = *(__be16 *) nh.pos ;
+			bpf_xdp_adjust_head(ctx, 2*sizeof(__be16)) ;
+			data_end = (void *)(long)ctx->data_end;
+			data = (void *)(long)ctx->data;
+			nh.pos = data;
+			parse_ethhdr(&nh, data_end, &eth) ;
+			*eth = ethx ;
+			__be16 * pcpdeivid = (__be16 *) (eth+1) ;
+			*pcpdeivid = 0;
+			action = XDP_PASS ;
+			goto out ;
+		}
 		if (nh_type == bpf_htons(ETH_P_IP)) {
+			/* Push a VLAN tag so we can tell when reentered */
+			ethx.h_proto = bpf_htons(ETH_P_8021Q) ;
+			bpf_xdp_adjust_head(ctx, 0-2*sizeof(__be16)) ;
+			data_end = (void *)(long)ctx->data_end;
+			data = (void *)(long)ctx->data;
+			nh.pos = data;
+			parse_ethhdr(&nh, data_end, &eth) ;
+			*eth = ethx ;
+			nh.pos += sizeof(ethx.h_proto);
+
 			/* Assignment additions go below here */
 			struct iphdr *iphdr;
 			int rc;

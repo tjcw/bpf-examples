@@ -630,8 +630,12 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 	bool pass = false;
 	uint32_t tx_idx = 0;
 	struct ethhdr *eth = (struct ethhdr *)pkt;
-	struct iphdr *ip = (struct iphdr *)(eth + 1);
-	if (ntohs(eth->h_proto) == ETH_P_IP &&
+	assert(eth->h_proto == htons(ETH_P_8021Q)); // Packet should have been vlan tagged by kernel
+    __be16 * pcpdeivid = (__be16 *) (eth+1) ;
+    assert(* pcpdeivid == 0);
+    __be16 proto=*(__be16 *) (pcpdeivid+1);
+	struct iphdr *ip = (struct iphdr *)(pcpdeivid+2);
+	if (ntohs(proto) == ETH_P_IP &&
 	    len > (sizeof(*eth) + sizeof(*ip))) {
 		__u8 protocol = ip->protocol;
 		__u32 saddr = ntohl(ip->saddr);
