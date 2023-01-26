@@ -241,19 +241,21 @@ int xsk_my_prog(struct xdp_md *ctx)
 			data_end = (void *)(long)ctx->data_end;
 			data = (void *)(long)ctx->data;
 			nh.pos = data;
-			int res=parse_ethhdr(&nh, data_end, &eth) ;
-			if ( res == -1) {
+			parse_ethhdr(&nh, data_end, &eth) ;
+			if ( nh.pos > data_end) {
 				action = XDP_DROP ;
 				goto out ;
 			}
 			*eth = ethx ;
 			nh.pos += 2*sizeof(__be16);
 			__be16 * pcpdeivid = (__be16 *) (eth+1) ;
+			__be16 * proto = pcpdeivid+1 ;
 			if (nh.pos > data_end ) {
 				action = XDP_DROP ;
 				goto out ;
 			}
 			*pcpdeivid = 0;
+			*proto = bpf_htons(ETH_P_IP);
 
 			/* Assignment additions go below here */
 			struct iphdr *iphdr;
