@@ -241,8 +241,8 @@ int xsk_my_prog(struct xdp_md *ctx)
 			data_end = (void *)(long)ctx->data_end;
 			data = (void *)(long)ctx->data;
 			nh.pos = data;
-			int rc=parse_ethhdr(&nh, data_end, &eth) ;
-			if ( rc == -1) {
+			int res=parse_ethhdr(&nh, data_end, &eth) ;
+			if ( res == -1) {
 				action = XDP_DROP ;
 				goto out ;
 			}
