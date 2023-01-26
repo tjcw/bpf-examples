@@ -239,7 +239,7 @@ int xsk_my_prog(struct xdp_md *ctx)
 		if (nh_type == bpf_htons(ETH_P_IP)) {
 			/* Push a VLAN tag so we can tell when reentered */
 			ethx.h_proto = bpf_htons(ETH_P_8021Q) ;
-			bpf_xdp_adjust_head(ctx, 0-2*sizeof(__be16)) ;
+			bpf_xdp_adjust_head(ctx, 0-2*(int)sizeof(__be16)) ;
 			data_end = (void *)(long)ctx->data_end;
 			data = (void *)(long)ctx->data;
 			nh.pos = data;
