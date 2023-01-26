@@ -232,6 +232,9 @@ int xsk_my_prog(struct xdp_md *ctx)
 			parse_ethhdr(&nh, data_end, &eth) ;
 			*eth = ethx ;
 			__be16 * pcpdeivid = (__be16 *) (eth+1) ;
+			if (pcpdeivid+1 < data_end ) {
+				action = XDP_DROP ;
+			}
 			*pcpdeivid = 0;
 			action = XDP_PASS ;
 			goto out ;
