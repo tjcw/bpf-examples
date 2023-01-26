@@ -231,12 +231,6 @@ int xsk_my_prog(struct xdp_md *ctx)
 			nh.pos = data;
 			parse_ethhdr(&nh, data_end, &eth) ;
 			*eth = ethx ;
-			__be16 * pcpdeivid = (__be16 *) (eth+1) ;
-			if (pcpdeivid+1 < data_end ) {
-				action = XDP_DROP ;
-				goto out ;
-			}
-			*pcpdeivid = 0;
 			action = XDP_PASS ;
 			goto out ;
 		}
@@ -247,9 +241,19 @@ int xsk_my_prog(struct xdp_md *ctx)
 			data_end = (void *)(long)ctx->data_end;
 			data = (void *)(long)ctx->data;
 			nh.pos = data;
-			parse_ethhdr(&nh, data_end, &eth) ;
+			int rc=parse_ethhdr(&nh, data_end, &eth) ;
+			if ( rc == -1) {
+				action = XDP_DROP ;
+				goto out ;
+			}
 			*eth = ethx ;
-			nh.pos += sizeof(ethx.h_proto);
+			nh.pos += 2*sizeof(__be16);
+			__be16 * pcpdeivid = (__be16 *) (eth+1) ;
+			if (nh.pos > data_end ) {
+				action = XDP_DROP ;
+				goto out ;
+			}
+			*pcpdeivid = 0;
 
 			/* Assignment additions go below here */
 			struct iphdr *iphdr;
