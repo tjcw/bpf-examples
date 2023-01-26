@@ -12,7 +12,7 @@
 export CLIENT_IP=192.168.17.9
 export BRIDGE_IP=10.1.0.254
 export SERVER_NODE_IP=10.1.0.2
-export FILTER=af_xdp_kern_dummy
+export FILTER=af_xdp_kern
 #export LEAVE=1
 export PORT=50000
 export CLIENT_NODE_IP=10.1.0.1
