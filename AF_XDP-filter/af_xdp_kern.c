@@ -216,7 +216,11 @@ int xsk_my_prog(struct xdp_md *ctx)
 		if (k_tracing)
 			bpf_printk("nh_type=0x%04x ETH_P_IP=0x%04x", nh_type,
 				   ETH_P_IP);
-		if (nh_type == bpf_htons(ETH_P_IP)) {
+		if (nh_type == bpf_htons(ETH_P_802_EX1)) {
+			/* ETH_P_802_EX1 used to mark packets which have previously been sent to user space */
+			eth->h_proto = bpf_htons(ETH_P_IP) ;
+			action = XDP_PASS ;
+		} else if (nh_type == bpf_htons(ETH_P_IP)) {
 			/* Assignment additions go below here */
 			struct iphdr *iphdr;
 			int rc;
@@ -277,6 +281,7 @@ int xsk_my_prog(struct xdp_md *ctx)
 		}
 		if (action == XDP_REDIRECT) {
 			stats_record_action(ctx, XDP_REDIRECT);
+			eth->h_proto = htons(ETH_P_802_EX1) ;
 			if (k_tracing)
 				bpf_printk(
 					"returning through bpf_redirect_map");
