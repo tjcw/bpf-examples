@@ -631,7 +631,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 	uint32_t tx_idx = 0;
 	struct ethhdr *eth = (struct ethhdr *)pkt;
 	struct iphdr *ip = (struct iphdr *)(eth + 1);
-	if (ntohs(eth->h_proto) == ETH_P_IP &&
+	if (ntohs(eth->h_proto) == ETH_P_802_EX1 &&
 	    len > (sizeof(*eth) + sizeof(*ip))) {
 		__u8 protocol = ip->protocol;
 		__u32 saddr = ntohl(ip->saddr);
