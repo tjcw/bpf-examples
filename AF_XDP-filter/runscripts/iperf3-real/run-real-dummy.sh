@@ -25,15 +25,15 @@ if [[ -z "${LEAVE}" ]]
 then 
   for device in /proc/sys/net/ipv4/conf/*
   do
-    echo 0 >${device}/rp_filter
+    echo 2 >${device}/rp_filter
   done
   cd ../..
   ./af_xdp_user_dummy -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
   real_pid=$!
-  sleep 2
+  sleep 4
   iperf3 -s -p ${PORT}  &
   iperf3_pid=$!
-  sleep 2
+  sleep 4
   ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
   kill -INT ${iperf3_pid} ${real_pid}
   for device in /proc/sys/net/ipv4/conf/*
