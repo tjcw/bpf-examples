@@ -254,7 +254,15 @@ int xsk_my_prog(struct xdp_md *ctx)
 				action = XDP_DROP ;
 				goto out ;
 			}
+			if ( pcpdeivid > data_end) {
+				action = XDP_DROP ;
+				goto out ;
+			}
 			*pcpdeivid = 0;
+			if ( proto > data_end) {
+				action = XDP_DROP ;
+				goto out ;
+			}
 			*proto = bpf_htons(ETH_P_IP);
 
 			/* Assignment additions go below here */
