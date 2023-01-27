@@ -11,6 +11,7 @@
 
 export CLIENT_IP=192.168.17.9
 export SERVER_IP=10.1.0.2
+export TUN_IP=10.1.0.253
 export FILTER=af_xdp_kern_dummy
 #export LEAVE=1
 export PORT=50000
