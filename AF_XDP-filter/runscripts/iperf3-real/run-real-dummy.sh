@@ -10,7 +10,7 @@
 # Set TUN_IP, CLIENT_IP, and SERVER_IP as required
 
 export CLIENT_IP=192.168.17.9
-export SERVER_NODE_IP=10.1.0.2
+export SERVER_IP=10.1.0.2
 export FILTER=af_xdp_kern_dummy
 #export LEAVE=1
 export PORT=50000
