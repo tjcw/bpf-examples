@@ -281,7 +281,7 @@ int xsk_my_prog(struct xdp_md *ctx)
 		}
 		if (action == XDP_REDIRECT) {
 			stats_record_action(ctx, XDP_REDIRECT);
-			eth->h_proto = htons(ETH_P_802_EX1) ;
+			eth->h_proto = bpf_htons(ETH_P_802_EX1) ;
 			if (k_tracing)
 				bpf_printk(
 					"returning through bpf_redirect_map");
