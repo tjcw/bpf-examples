@@ -11,17 +11,17 @@
 
 export CLIENT_IP=192.168.17.9
 export SERVER_IP=10.1.0.2
-export TUN_IP=10.1.0.253
+#export TUN_IP=10.1.0.253
 export FILTER=af_xdp_kern_dummy
 #export LEAVE=1
 export PORT=50000
 
 ip link set dev enp25s0 xdpgeneric off
 rm -f /sys/fs/bpf/accept_map /sys/fs/bpf/xdp_stats_map
-ip tuntap add mode tun tun0
-ip link set dev tun0 down
-ip addr add ${TUN_IP}/24 dev tun0
-ip link set dev tun0 up
+#ip tuntap add mode tun tun0
+#ip link set dev tun0 down
+#ip addr add ${TUN_IP}/24 dev tun0
+#ip link set dev tun0 up
 if [[ -z "${LEAVE}" ]]
 then 
   for device in /proc/sys/net/ipv4/conf/*
