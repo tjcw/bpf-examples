@@ -22,13 +22,19 @@ then
     echo 0 >${device}/rp_filter
   done
   cd ../..
-  ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
-  real_pid=$!
+  if [[ -z "DUMMY" ]]
+  then
+    ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
+    real_pid=$!
+  else
+    ./af_xdp_user_dummy -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
+    real_pid=$!
+  fi
   sleep 2
   iperf3 -s -p ${PORT}  &
   iperf3_pid=$!
   sleep 2
-  ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
+  ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} -t 60 | tee client.log
   kill -INT ${iperf3_pid} ${real_pid}
   for device in /proc/sys/net/ipv4/conf/*
   do
@@ -37,7 +43,7 @@ then
 else
   iperf3 -s -p ${PORT} &
   iperf3_pid=$!
-  ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} | tee client.log
+  ssh ${CLIENT_IP} iperf3 -c ${SERVER_IP} -p ${PORT} -t 60 | tee client.log
   kill -INT ${iperf3_pid}
 fi
 wait

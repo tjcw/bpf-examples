@@ -10,13 +10,6 @@ export CLIENT_IP=192.168.17.9
 export SERVER_IP=10.1.0.2
 export TUN_IP=10.1.0.254
 (
-  cd netperf-real
-  echo "netperf-real"
-  FILTER=af_xdp_kern TCP_RR=1 PORT=50003 ./run.sh
-  FILTER=af_xdp_kern_passall TCP_RR=1 PORT=50004 ./run.sh
-  LEAVE=1 TCP_RR=1 PORT=50005 ./run.sh
-)
-(
   cd iperf3-real
   echo "iperf3-real"
 
