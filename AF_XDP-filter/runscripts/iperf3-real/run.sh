@@ -22,7 +22,7 @@ then
     echo 0 >${device}/rp_filter
   done
   cd ../..
-  if [[ -z "DUMMY" ]]
+  if [[ -z "${DUMMY}" ]]
   then
     ./af_xdp_user -S -d enp25s0 -Q 16 --filename ./${FILTER}.o &
     real_pid=$!
