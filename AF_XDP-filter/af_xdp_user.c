@@ -127,7 +127,8 @@ enum {
 	k_userspace_all_packets =
 		true, // Whether to have the kernel send all packets to user space
 	k_timeout_wait =
-		true // Whether to set a 10ms timeout on the wait for another packet
+		true, // Whether to set a 10ms timeout on the wait for another packet
+	k_enable_tun = false // Whether to enable use of the TUN device
 };
 /* End of feature flags */
 
@@ -691,7 +692,7 @@ static bool process_packet(struct xsk_socket_info *xsk_src,
 			stats->stats.filter_passes[protocol] += 1;
 			uint8_t *write_addr = (uint8_t *)ip;
 			size_t write_len = len - sizeof(struct ethhdr);
-			if (tun_fd != -1) {
+			if (k_enable_tun && tun_fd != -1) {
 				ssize_t ret =
 					write(tun_fd, write_addr, write_len);
 				if (k_instrument) {
@@ -1235,7 +1236,7 @@ static void exit_application(int sig)
 	global_exit = true;
 }
 
-int tun_alloc(char *dev)
+static int tun_alloc(char *dev)
 {
 	struct ifreq ifr;
 	int fd, err;
@@ -1456,7 +1457,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (cfg.redirect_ifname_pid == -1) {
+	assert(k_enable_tun || cfg.redirect_ifname_pid != -1) ;
+	if (k_enable_tun && cfg.redirect_ifname_pid == -1) {
 		/* First frames to be handled by TUN */
 		/* Start TUN */
 		strcpy(tun_name, "tun0");

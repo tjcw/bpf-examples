@@ -24,21 +24,27 @@ then
     echo 0 >${device}/rp_filter
   done
   cd ../..
-  ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
-  ns2_pid=$!
+  if [[ -z "${DUMMY}" ]]
+  then 
+    ./af_xdp_user -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
+    ns2_pid=$!
+  else
+    ./af_xdp_user_dummy -S -d vpeer2 -Q 1 --filename ./${FILTER}.o &
+    ns2_pid=$!
+  fi
   sleep 2
   iperf3 -s -p ${PORT} &
   iperf3_pid=$!
-  sleep 20
+  sleep 70
   kill -INT ${ns2_pid} ${iperf3_pid}
-else
-  iperf3 -s -p ${PORT} &
-  iperf3_pid=$!
-  sleep 20
-  kill -INT ${iperf3_pid}  
   for device in /proc/sys/net/ipv4/conf/*
   do
     echo 2 >${device}/rp_filter
   done
+else
+  iperf3 -s -p ${PORT} &
+  iperf3_pid=$!
+  sleep 70
+  kill -INT ${iperf3_pid}  
 fi 
 wait
