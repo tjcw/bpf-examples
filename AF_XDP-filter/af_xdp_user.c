@@ -125,7 +125,7 @@ enum {
 	k_use_epoll =
 		false, // Whether to use epoll rather than poll to find the ready queues
 	k_userspace_all_packets =
-		true, // Whether to have the kernel send all packets to user space
+		false, // Whether to have the kernel send all packets to user space
 	k_timeout_wait =
 		true, // Whether to set a 10ms timeout on the wait for another packet
 	k_enable_tun = false // Whether to enable use of the TUN device
