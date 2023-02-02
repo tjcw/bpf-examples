@@ -107,13 +107,13 @@ const char *pin_basedir = "/sys/fs/bpf";
 
 /* Feature flags */
 enum {
-	k_instrument = true, // Whether to display trace
+	k_instrument = false, // Whether to display trace
 	k_instrument_detail = false, // Whether to display detailed trace
 	k_receive_tuntap = true, // Whether to receive on the tun/tap interface
 	k_verify_umem = false, // Whether to check umem usage
 	k_verbose = false, // Whether to give verbose output
 	k_timestamp = false, // Whether to put timestamps on trace output
-	k_showpacket = true, // Whether to display packet contents
+	k_showpacket = false, // Whether to display packet contents
 	k_show_iph_checksum = false, // Whether to display IP header checksum
 	k_diagnose_setns = false, // Whether to trace setns processing
 	k_share_rxtx_umem =
