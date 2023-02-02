@@ -60,8 +60,19 @@ fi
     source_mac=$(ip netns exec ns1 ip a s dev vpeer1|awk '{ if($1 == "link/ether") { print $2 } }')
 ## Give a shell prompt here so I can explore what MAC addresses really need giving to af_xdp_user
 #    bash
-    DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${ns1_pid} &
-    af_pid=$!
+    if [[ -z "${DUMMY}" ]]
+    then
+      DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${ns1_pid} &
+      af_pid=$!
+    else
+      DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user_dummy -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${ns1_pid} &
+      af_pid=$!
+    fi
+    if [[ -n "${BOTH} ]]
+    then
+      ../../af_xdp_user -S -d veth2 -Q 1 --filename ../../${FILTER}.o -r vpeer2 -a ${ns2_pid} &
+      af_other_pid=$!
+    fi
     sleep 2
  #   ../../af_xdp_user_dummy -S -d vpeer1 -Q 1 --filename ../../af_xdp_kern_dummy.o &
  #   af_pid_dummy=$!
@@ -71,6 +82,10 @@ fi
     sleep 70
     iptables -F INPUT
     kill -INT ${af_pid}
+    if [[ -n "${BOTH} ]]
+    then
+      kill -INT ${af_other_pid}
+    fi
 #    kill -INT ${af_pid_dummy}
     kill -TERM ${filter_pid}
 #    for device in /proc/sys/net/ipv4/conf/*
