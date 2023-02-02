@@ -16,7 +16,7 @@ fi
 
 iperf3 -s -p ${PORT} &
 iperf3_pid=$!
-sleep 70
+sleep 80
 kill -INT ${iperf3_pid}
 if [[ -n "${TCPDUMP}" ]]
 then
