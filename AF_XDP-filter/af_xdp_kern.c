@@ -220,6 +220,7 @@ int xsk_my_prog(struct xdp_md *ctx)
 			/* ETH_P_802_EX1 used to mark packets which have previously been sent to user space */
 			eth->h_proto = bpf_htons(ETH_P_IP) ;
 			action = XDP_PASS ;
+			goto out;
 		} else if (nh_type == bpf_htons(ETH_P_IP)) {
 			/* Assignment additions go below here */
 			struct iphdr *iphdr;
