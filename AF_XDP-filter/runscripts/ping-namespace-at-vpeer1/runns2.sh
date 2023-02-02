@@ -14,10 +14,7 @@ then
   tcpdump_vpeer2_pid=$!
 fi
 
-iperf3 -s -p ${PORT} &
-iperf3_pid=$!
-sleep 80
-kill -INT ${iperf3_pid}
+sleep 10
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_vpeer2_pid}

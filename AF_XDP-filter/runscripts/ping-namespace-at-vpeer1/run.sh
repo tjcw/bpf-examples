@@ -79,7 +79,7 @@ fi
  #   sleep 2
     ../../filter-xdp_stats &
     filter_pid=$!
-    sleep 70
+    sleep 20
     iptables -F INPUT
     kill -INT ${af_pid}
     if [[ -n "${BOTH}" ]]
