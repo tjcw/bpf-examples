@@ -292,5 +292,6 @@ out:
 	return stats_record_action(ctx, action); /* read via xdp_stats */
 }
 
-char _license[] SEC("license") = "GPL";
+char LICENSE[] SEC("license") = "GPL";
+//char _license[] SEC("license") = "GPL";
 __uint(xsk_prog_version, XSK_PROG_VERSION) SEC(XDP_METADATA_SECTION);
