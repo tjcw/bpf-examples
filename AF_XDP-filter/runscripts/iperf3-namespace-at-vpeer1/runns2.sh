@@ -14,7 +14,7 @@ then
   tcpdump_vpeer2_pid=$!
 fi
 
-iperf3 -s &
+iperf3 -s -p ${PORT} &
 iperf3_pid=$!
 sleep 70
 kill -INT ${iperf3_pid}
