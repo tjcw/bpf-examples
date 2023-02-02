@@ -68,7 +68,7 @@ fi
       DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user_dummy -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${ns1_pid} &
       af_pid=$!
     fi
-    if [[ -n "${BOTH} ]]
+    if [[ -n "${BOTH}" ]]
     then
       ../../af_xdp_user -S -d veth2 -Q 1 --filename ../../${FILTER}.o -r vpeer2 -a ${ns2_pid} &
       af_other_pid=$!
@@ -82,7 +82,7 @@ fi
     sleep 70
     iptables -F INPUT
     kill -INT ${af_pid}
-    if [[ -n "${BOTH} ]]
+    if [[ -n "${BOTH}" ]]
     then
       kill -INT ${af_other_pid}
     fi
