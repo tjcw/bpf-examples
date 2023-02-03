@@ -21,6 +21,7 @@ if [[ -n "${BOTH}" ]]
 then
   if [[ -n "${INGRESS}" ]]
   then
+    mount -t bpf bpf /sys/fs/bpf
     if [[ -z "${ALL_PACKETS}" ]]
     then
       ../../af_xdp_user -S -d vpeer2 -Q 1 --filename ../../${FILTER}.o -r veth2 -a ${ROOTNSPID} &

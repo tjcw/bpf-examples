@@ -16,6 +16,7 @@ then
 fi
 if [[ -n "${INGRESS}" ]]
 then
+  mount -t bpf bpf /sys/fs/bpf
   if [[ -z "${ALL_PACKETS}" ]]
   then
     ../../af_xdp_user -S -d vpeer1 -Q 1 --filename ../../${FILTER}.o -r veth1 -a ${ROOTNSPID} &
