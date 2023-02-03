@@ -43,6 +43,7 @@ then
   sleep 1
 fi
 (
+  export ROOTNSPID=$BASHPID 
   ip netns exec ns2 ./runns2.sh &
   ns2_pid=$!
   sleep 1

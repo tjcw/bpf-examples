@@ -14,10 +14,25 @@ then
   tcpdump -i vpeer1 -w vpeer1.tcpdump not ip6 &
   tcpdump_vpeer1_pid=$!
 fi
+if [[ -n "${INGRESS}" ]]
+then
+  if [[ -z "${ALL_PACKETS}" ]]
+  then
+    ../../af_xdp_user -S -d vpeer1 -Q 1 --filename ../../${FILTER}.o -r veth1 -a ${ROOTNSPID} &
+    af_pid=$!
+  else
+    ../../af_xdp_user_all_packets -S -d vpeer1 -Q 1 --filename ../../${FILTER}.o -r veth1 -a ${ROOTNSPID} &
+    af_pid=$!
+  fi
+fi
 sleep 6
 iperf3 -c 10.10.0.20 -t 60 -p ${PORT}
 if [[ -n "${TCPDUMP}" ]]
 then
   kill -INT ${tcpdump_vpeer1_pid}
+fi
+if [[ -n "${INGRESS}" ]]
+then
+  kill -INT ${af_pid}
 fi
 wait
