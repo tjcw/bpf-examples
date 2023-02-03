@@ -8,6 +8,7 @@ ip link set lo up
 ip link set vpeer1 up
 ip addr add 10.10.0.10/16 dev vpeer1
 ip link set dev vpeer1 xdpgeneric off
+ethtool -K vpeer1 tx off
 if [[ -n "${TCPDUMP}" ]]
 then
   tcpdump -v -i vpeer1 -w vpeer1.tcpdump not ip6 &
