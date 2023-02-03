@@ -5,13 +5,13 @@
 # Set LEAVE env var non-null for baseline test with no eBPF filter
 # Set TCPDUMP env var non-null to take tcpdumps of the interfaces
 ip link set lo up
-ip link set vpeer2 up
-ip addr add 10.10.0.20/16 dev vpeer2
-ip link set dev vpeer2 xdpgeneric off
+ip link set vpeer1 up
+ip addr add 10.10.0.10/16 dev vpeer1
+ip link set dev vpeer1 xdpgeneric off
 if [[ -n "${TCPDUMP}" ]]
 then
-  tcpdump -v -i vpeer2 -w vpeer2.tcpdump not ip6 &
-  tcpdump_vpeer2_pid=$!
+  tcpdump -v -i vpeer1 -w vpeer1.tcpdump not ip6 &
+  tcpdump_vpeer1_pid=$!
 fi
 
 iperf3 -s -p ${PORT} &
@@ -20,6 +20,6 @@ sleep 80
 kill -INT ${iperf3_pid}
 if [[ -n "${TCPDUMP}" ]]
 then
-  kill -INT ${tcpdump_vpeer2_pid}
+  kill -INT ${tcpdump_vpeer1_pid}
 fi
 wait
