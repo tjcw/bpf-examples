@@ -32,7 +32,6 @@ then
   fi
 fi
 
-fi
 iperf3 -s -p ${PORT} &
 iperf3_pid=$!
 sleep 80
