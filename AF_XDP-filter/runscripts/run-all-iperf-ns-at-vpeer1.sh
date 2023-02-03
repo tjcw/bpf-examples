@@ -8,4 +8,6 @@ ulimit -c unlimited
   FILTER=af_xdp_kern_dummy PORT=50009 DUMMY=1 ./run.sh
   FILTER=af_xdp_kern PORT=50006 ./run.sh
   FILTER=af_xdp_kern PORT=50007 BOTH=1 ./run.sh
+  FILTER=af_xdp_kern PORT=50006 ALL_PACKETS=1 ./run.sh
+  FILTER=af_xdp_kern PORT=50007 BOTH=1 ALL_PACKETS=1 ./run.sh
 )

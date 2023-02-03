@@ -62,8 +62,14 @@ fi
 #    bash
     if [[ -z "${DUMMY}" ]]
     then
-      DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${ns1_pid} &
-      af_pid=$!
+      if [[ -z "${ALL_PACKETS}" ]]
+      then
+        DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${ns1_pid} &
+        af_pid=$!
+      else
+        DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user_all_packets -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${ns1_pid} &
+        af_pid=$!
+      fi
     else
       DST_MAC=${destination_mac} SRC_MAC=${source_mac} ../../af_xdp_user_dummy -S -d veth1 -Q 1 --filename ../../${FILTER}.o -r vpeer1 -a ${ns1_pid} &
       af_pid=$!
