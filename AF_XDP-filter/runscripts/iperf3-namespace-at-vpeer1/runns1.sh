@@ -5,7 +5,7 @@
 ip link set lo up
 ip link set vpeer1 up
 ip addr add 10.10.0.10/16 dev vpeer1
-if [[ -n "S{SWCKSUM}" ]]
+if [[ -n "${SWCKSUM}" ]]
 then
   ethtool -K vpeer1 tx off
 fi
