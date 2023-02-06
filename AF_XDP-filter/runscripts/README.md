@@ -54,6 +54,9 @@ run/runvm.sh setup for running beween 2 VMs with reinject using tun
 
 udp-namespace-direct-with-dummy udp test between 2 namespaces with intercept at veth1 and reinject at veth2
 
+Tests which reinject at the TUN interface do not run at the moment, because driving TUN is compiled out in af_xdp_user.c . See k_enable_tun in af_xdp_user.c if you want to compile 
+this support in.
+
 Scripts : 
 run-all-iperf-ns-at-vpeer1-reverse.sh  Run all configurations in iperf3-namespace-at-vpeer1-reverse
 
