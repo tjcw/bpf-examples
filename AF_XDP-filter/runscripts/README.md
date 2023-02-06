@@ -1,6 +1,18 @@
+This directory contains directories each of which controls a particular test configuration, and contains scripts which sequence through test configurations.
+
+Directories : 
+
 iperf3-namespace  iperf3 between 2 namespaces with intercept at vpeer2 and reinject using tun
 
+iperf3-namespace-at-vpeer1 iperf3 between 2 namespaces with intercept at vpeer1 and reinject at veth1 (work in progress)
+
+iperf3-namespace-at-vpeer1-reverse iperf3 between 2 namespaces with intercept at veth1 and reinject at vpeer1 (work in progress)
+
+iperf3-namespace-direct  iperf3 between 2 namespaces with intercept at veth1 and reinject at bridge
+
 iperf3-real       iperf3 between 2 real machines with reinject using tun
+
+iperf3-real-namespace  iperf3 between 2 real machines with iperf3 in namespaces (work in progress)
 
 netperf-namespace  netperf between 2 namespaces with intercept at vpeer2 and reinject using tun
 
@@ -31,3 +43,16 @@ run/runns.sh 10 pings between 2 namespaces with intercept at vpeer2 and reinject
 run/runvm.sh setup for running beween 2 VMs with reinject using tun
 
 udp-namespace-direct-with-dummy udp test between 2 namespaces with intercept at veth1 and reinject at veth2
+
+Scripts : 
+run-all-iperf-ns-at-vpeer1-reverse.sh  Run all configurations in iperf3-namespace-at-vpeer1-reverse
+
+run-all-iperf-ns-at-vpeer1.sh  Run all configurations in iperf3-namespace-at-vpeer1
+
+run-all-iperf-real.sh Run all iperf3 configirations between real machines
+
+run-all-ns-pings.sh  Run all ping tests between naemspaces]
+
+run-all-ping-ns-at-vpeer1.sh  Run all ping tests between namespaces which reunject at at vpeer1
+
+run-all-real.sh  Runa all configrations between real machines

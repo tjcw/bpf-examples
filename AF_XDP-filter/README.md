@@ -87,3 +87,32 @@ The scripts which run between 2 real machines are set up to assume a
 16-channel ethernet adapter card, which matches the Pensando card I
 have in my machines.  A different card would require adjusting the 
 `-Q` parameter in the scripts.   
+
+af_xdp_user.c is configured by an enum which is currently set as
+- enum {
+-   k_instrument = false, // Whether to display trace
+-	k_instrument_detail = false, // Whether to display detailed trace
+-	k_receive_tuntap = true, // Whether to receive on the tun/tap interface
+-	k_verify_umem = false, // Whether to check umem usage
+-	k_verbose = false, // Whether to give verbose output
+-	k_timestamp = false, // Whether to put timestamps on trace output
+-	k_showpacket = false, // Whether to display packet contents
+-	k_show_iph_checksum = false, // Whether to display IP header checksum
+-	k_diagnose_setns = false, // Whether to trace setns processing
+-	k_share_rxtx_umem =
+-		true, // Whether to share receive and transmit buffers
+-	k_rewrite_mac_addresses =
+-		false, // Whether to rewrite the source and destinationMAC addresses
+-	k_use_select =
+-		false, // Whether to use select rather than poll to find the ready queues
+-	k_use_epoll =
+-		false, // Whether to use epoll rather than poll to find the ready queues
+-	k_userspace_all_packets =
+-		false, // Whether to have the kernel send all packets to user space
+-	k_timeout_wait =
+-		true, // Whether to set a 10ms timeout on the wait for another packet
+-	k_enable_tun = false // Whether to enable use of the TUN device
+-};
+
+af_xdp_user_all_packets.c is the same as af_xdp_user.c except for the setting of k_userspace_all_packets .
+
