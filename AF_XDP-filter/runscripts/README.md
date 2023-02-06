@@ -1,5 +1,15 @@
 This directory contains directories each of which controls a particular test configuration, and contains scripts which sequence through test configurations.
 
+The scripts in this directory set various environment varaibles which are used to control the scripts in the subdirectories. These are :
+- LEAVE : set this to cause no interception of packets, for baseline tests
+- TCPDUMP : set this to cause tcpdump to be activated on the interfaces
+- FILTER : set this to the eBPF filter to use, af_xdp_kern or af_xdp_kern_dummy or af_xdp_kern_passall
+- SWCKSUM : set this to cause kernel software checksum of all TCP packets
+- PORT : Set this to the TCP server port to use for the test
+- BOTH : Set this for filtration on the client namespace as well as the server namespace
+- ALL_PACKETS : Set this to cause all packets for a flow to be redirected to userspace
+- INGRESS : Set this to filter ingress packets as well as egress packets. Not working at present.
+
 Directories : 
 
 iperf3-namespace  iperf3 between 2 namespaces with intercept at vpeer2 and reinject using tun
